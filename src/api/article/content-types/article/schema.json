@@ -1,0 +1,86 @@
+{
+  "kind": "collectionType",
+  "collectionName": "t_articles",
+  "info": {
+    "singularName": "article",
+    "pluralName": "articles",
+    "displayName": "記事",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "introduction": {
+      "type": "text",
+      "required": true
+    },
+    "category": {
+      "type": "enumeration",
+      "enum": [
+        "ACTIVITY_REPORT",
+        "INTERVIEW"
+      ],
+      "default": "ACTIVITY_REPORT",
+      "required": true
+    },
+    "publishStatus": {
+      "type": "enumeration",
+      "enum": [
+        "PUBLIC",
+        "COMMUNITY_INTERNAL",
+        "PRIVATE"
+      ],
+      "default": "PUBLIC",
+      "required": true
+    },
+    "body": {
+      "type": "richtext",
+      "required": true
+    },
+    "thumbnail": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "community": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::community.community",
+      "required": true,
+      "mappedBy": "articles",
+      "inversedBy": "articles"
+    },
+    "authors": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::user.user",
+      "required": true,
+      "inversedBy": "articlesWrittenByMe"
+    },
+    "relatedUsers": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::user.user",
+      "required": false,
+      "inversedBy": "articlesAboutMe"
+    },
+    "opportunities": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::opportunity.opportunity",
+      "inversedBy": "articles"
+    },
+    "publishedAtOnDB": {
+      "type": "datetime",
+      "required": true
+    }
+  }
+}

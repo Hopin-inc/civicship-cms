@@ -369,6 +369,210 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiArticleArticle extends Struct.CollectionTypeSchema {
+  collectionName: 't_articles';
+  info: {
+    description: '';
+    displayName: '\u8A18\u4E8B';
+    pluralName: 'articles';
+    singularName: 'article';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    authors: Schema.Attribute.Relation<'manyToMany', 'api::user.user'> &
+      Schema.Attribute.Required;
+    body: Schema.Attribute.RichText & Schema.Attribute.Required;
+    category: Schema.Attribute.Enumeration<['ACTIVITY_REPORT', 'INTERVIEW']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'ACTIVITY_REPORT'>;
+    community: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::community.community'
+    > &
+      Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    introduction: Schema.Attribute.Text & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::article.article'
+    > &
+      Schema.Attribute.Private;
+    opportunities: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::opportunity.opportunity'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    publishedAtOnDB: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    publishStatus: Schema.Attribute.Enumeration<
+      ['PUBLIC', 'COMMUNITY_INTERNAL', 'PRIVATE']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'PUBLIC'>;
+    relatedUsers: Schema.Attribute.Relation<'manyToMany', 'api::user.user'>;
+    thumbnail: Schema.Attribute.Media<'images'>;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiCommunityCommunity extends Struct.CollectionTypeSchema {
+  collectionName: 't_communities';
+  info: {
+    description: '';
+    displayName: '\u30B3\u30DF\u30E5\u30CB\u30C6\u30A3';
+    pluralName: 'communities';
+    singularName: 'community';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    articles: Schema.Attribute.Relation<'oneToMany', 'api::article.article'> &
+      Schema.Attribute.Private &
+      Schema.Attribute.SetPluginOptions<{
+        'content-manager': {
+          visible: false;
+        };
+      }>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::community.community'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
+    opportunities: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::opportunity.opportunity'
+    > &
+      Schema.Attribute.Private &
+      Schema.Attribute.SetPluginOptions<{
+        'content-manager': {
+          visible: false;
+        };
+      }>;
+    pointName: Schema.Attribute.String & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiOpportunityOpportunity extends Struct.CollectionTypeSchema {
+  collectionName: 't_opportunities';
+  info: {
+    description: '';
+    displayName: '\u6A5F\u4F1A (\u30AF\u30A8\u30B9\u30C8/\u30A4\u30D9\u30F3\u30C8/\u30A2\u30AF\u30C6\u30A3\u30D3\u30C6\u30A3)';
+    pluralName: 'opportunities';
+    singularName: 'opportunity';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    articles: Schema.Attribute.Relation<'manyToMany', 'api::article.article'> &
+      Schema.Attribute.Private &
+      Schema.Attribute.SetPluginOptions<{
+        'content-manager': {
+          visible: false;
+        };
+      }>;
+    category: Schema.Attribute.Enumeration<['QUEST', 'EVENT', 'ACTIVITY']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'QUEST'>;
+    community: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::community.community'
+    > &
+      Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    createdByOnDB: Schema.Attribute.Relation<'manyToOne', 'api::user.user'> &
+      Schema.Attribute.Required;
+    description: Schema.Attribute.String & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::opportunity.opportunity'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiUserUser extends Struct.CollectionTypeSchema {
+  collectionName: 't_users';
+  info: {
+    description: '';
+    displayName: '\u30E6\u30FC\u30B6\u30FC';
+    pluralName: 'users';
+    singularName: 'user';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    articlesAboutMe: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::article.article'
+    > &
+      Schema.Attribute.Private &
+      Schema.Attribute.SetPluginOptions<{
+        'content-manager': {
+          visible: false;
+        };
+      }>;
+    articlesWrittenByMe: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::article.article'
+    > &
+      Schema.Attribute.Private &
+      Schema.Attribute.SetPluginOptions<{
+        'content-manager': {
+          visible: false;
+        };
+      }>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::user.user'> &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
+    opportunitiesCreatedByMe: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::opportunity.opportunity'
+    > &
+      Schema.Attribute.Private &
+      Schema.Attribute.SetPluginOptions<{
+        'content-manager': {
+          visible: false;
+        };
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    slug: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface PluginContentReleasesRelease
   extends Struct.CollectionTypeSchema {
   collectionName: 'strapi_releases';
@@ -878,6 +1082,10 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::article.article': ApiArticleArticle;
+      'api::community.community': ApiCommunityCommunity;
+      'api::opportunity.opportunity': ApiOpportunityOpportunity;
+      'api::user.user': ApiUserUser;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

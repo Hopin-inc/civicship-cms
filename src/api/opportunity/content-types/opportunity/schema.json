@@ -1,0 +1,60 @@
+{
+  "kind": "collectionType",
+  "collectionName": "t_opportunities",
+  "info": {
+    "singularName": "opportunity",
+    "pluralName": "opportunities",
+    "displayName": "機会 (クエスト/イベント/アクティビティ)",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "string",
+      "required": true
+    },
+    "category": {
+      "type": "enumeration",
+      "enum": [
+        "QUEST",
+        "EVENT",
+        "ACTIVITY"
+      ],
+      "default": "QUEST",
+      "required": true
+    },
+    "articles": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::article.article",
+      "private": true,
+      "pluginOptions": {
+        "content-manager": {
+          "visible": false
+        }
+      },
+      "mappedBy": "opportunities"
+    },
+    "community": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::community.community",
+      "inversedBy": "opportunities",
+      "mappedBy": "opportunities",
+      "required": true
+    },
+    "createdByOnDB": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::user.user",
+      "inversedBy": "opportunitiesCreatedByMe",
+      "required": true
+    }
+  }
+}
