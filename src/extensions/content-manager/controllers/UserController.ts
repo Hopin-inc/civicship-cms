@@ -63,6 +63,7 @@ export default class UserController {
       documentId: item.id,
       name: item.name,
       slug: item.slug,
+      currentPrefecture: item.currentPrefecture,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
     }));
@@ -94,6 +95,7 @@ export default class UserController {
         documentId: user.id,
         name: user.name,
         slug: user.slug,
+        currentPrefecture: user.currentPrefecture,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       },
@@ -110,11 +112,12 @@ export default class UserController {
       return ctx.badRequest("No data provided");
     }
     try {
-      const { name, slug } = data;
+      const { name, slug, currentPrefecture } = data;
       const newUser = await prisma.user.create({
         data: {
           name,
           slug,
+          currentPrefecture,
         },
       });
       ctx.body = {

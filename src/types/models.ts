@@ -10,6 +10,7 @@ export type Community = {
 export type User = {
   name: string;
   slug: string;
+  currentPrefecture: string;
   createdAt: Date;
   updatedAt?: Date;
 };

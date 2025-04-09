@@ -3,12 +3,24 @@
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace PrismaJson {
-    type ImageInfo = {
-      src: string;
+    export type ImageInfo = {
+      strapiId?: number;
+      bucket: string;
+      folderPath: string;
+      fileName: string;
+      url: string;
+      isPublic: boolean;
+      size: number;
+      width: number;
+      height: number;
+      ext: string;
+      mime: string;
+      createdAt: Date;
+      updatedAt?: Date;
       caption?: string;
       alt?: string;
     };
-    type ArrayOfIds = string[];
-    type ArrayOfImageInfo = ImageInfo[];
+    export type ArrayOfIds = string[];
+    export type ArrayOfImageInfo = ImageInfo[];
   }
 }
