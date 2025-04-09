@@ -11,45 +11,45 @@ export type BaseResultNode = {
 
 export type Image = {
   id: number;
-  documentId: string;
+  documentId?: string;
   name: string;
-  alternateText: string | null;
+  alternativeText: string | null;
   caption: string | null;
   width: number;
   height: number;
-  formats: {
-    large: ImageFormat;
-    small: ImageFormat;
-    medium: ImageFormat;
+  formats?: {
+    large?: ImageFormat;
+    small?: ImageFormat;
+    medium?: ImageFormat;
     thumbnail: ImageFormat;
   };
-  hash: string;
+  hash?: string;
   ext: string;
   mime: string;
   size: number;
   url: string;
-  previewUrl: string | null;
+  previewUrl?: string | null;
   provider: string;
-  provider_metadata: string | null;
-  folderPath: string;
+  provider_metadata?: string | null;
+  folderPath?: string;
   createdAt: Date;
   updatedAt?: Date;
   publishedAt?: Date;
-  locale: unknown;
-  folder: string | null;
+  locale?: unknown;
+  folder?: string | null;
 };
 
 type ImageFormat = {
-  ext: string;
+  ext?: string;
   url: string;
-  hash: string;
-  mime: string;
-  name: string;
-  path: string | null;
-  size: number;
-  width: number;
-  height: number;
-  sizeInBytes: number;
+  hash?: string;
+  mime?: string;
+  name?: string;
+  path?: string | null;
+  size?: number;
+  width?: number;
+  height?: number;
+  sizeInBytes?: number;
 }
 
 type FindOneBaseMeta = {
