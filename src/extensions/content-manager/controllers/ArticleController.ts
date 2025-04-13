@@ -31,6 +31,7 @@ export default class ArticleController {
         orderBy,
         include: {
           community: true,
+          thumbnail: true,
         },
       }),
     ]);
@@ -55,7 +56,7 @@ export default class ArticleController {
         caption: item.thumbnail.caption ?? null,
         url: item.thumbnail.isPublic
           ? item.thumbnail.url
-          : await generateSignedUrl(item.thumbnail.fileName, item.thumbnail.folderPath, item.thumbnail.bucket),
+          : await generateSignedUrl(item.thumbnail.filename, item.thumbnail.folderPath, item.thumbnail.bucket),
         provider: "@strapi-community/strapi-provider-upload-google-cloud-storage",
         createdAt: item.thumbnail.createdAt,
       } : null,
@@ -87,6 +88,7 @@ export default class ArticleController {
       where: { id },
       include: {
         community: true,
+        thumbnail: true,
       }
     });
 
@@ -109,7 +111,7 @@ export default class ArticleController {
         },
         thumbnail: article.thumbnail ? {
           id: article.thumbnail.strapiId ?? -1,
-          name: article.thumbnail.fileName,
+          name: article.thumbnail.filename,
           size: article.thumbnail.size,
           width: article.thumbnail.width,
           height: article.thumbnail.height,
@@ -119,7 +121,7 @@ export default class ArticleController {
           caption: article.thumbnail.caption ?? null,
           url: article.thumbnail.isPublic
             ? article.thumbnail.url
-            : await generateSignedUrl(article.thumbnail.fileName, article.thumbnail.folderPath, article.thumbnail.bucket),
+            : await generateSignedUrl(article.thumbnail.filename, article.thumbnail.folderPath, article.thumbnail.bucket),
           provider: "@strapi-community/strapi-provider-upload-google-cloud-storage",
           createdAt: article.thumbnail.createdAt,
         } : null,
@@ -141,14 +143,14 @@ export default class ArticleController {
     }
     try {
       const { title, introduction, body, category, publishStatus, publishedAtOnDB: publishedAt, thumbnail: t } = data;
-      const { bucket, filePath, fileName } = getFileInfoFromUrl(t.url);
+      const { bucket, folderPath, filename } = getFileInfoFromUrl(t.url);
       // @ts-ignore
       const thumbnail: PrismaJson.ImageInfo | null = t ? {
         strapiId: t.id,
         url: t.url,
         bucket,
-        filePath,
-        fileName,
+        folderPath,
+        filename,
         size: t.size,
         width: t.width,
         height: t.height,
@@ -169,7 +171,9 @@ export default class ArticleController {
           category,
           publishStatus,
           publishedAt,
-          thumbnail,
+          thumbnail: {
+            create: thumbnail,
+          },
           community: {
             connect: {
               id: communityId,
@@ -185,6 +189,9 @@ export default class ArticleController {
             connect: data.opportunities?.connect?.map(e => ({ id: e.id })),
           },
         },
+        include: {
+          thumbnail: true,
+        }
       });
       ctx.body = {
         data: {
@@ -221,7 +228,7 @@ export default class ArticleController {
         return ctx.notFound(`Article not found: ${ id }`);
       }
       const { title, introduction, body, category, publishStatus, publishedAtOnDB: publishedAt, thumbnail: t } = data;
-      const { bucket, filePath, fileName } = getFileInfoFromUrl(t.url);
+      const { bucket, folderPath, filename } = getFileInfoFromUrl(t.url);
       const updatedArticle = await prisma.article.update({
         where: { id },
         data: {
@@ -233,21 +240,23 @@ export default class ArticleController {
           ...(publishedAt ? { publishedAt } : {}),
           ...(t ? {
             thumbnail: {
-              strapiId: t.id,
-              url: t.url,
-              bucket,
-              filePath,
-              fileName,
-              size: t.size,
-              width: t.width,
-              height: t.height,
-              mime: t.mime,
-              ext: t.ext,
-              alt: t.alternativeText && t.alternativeText !== "" ? t.alternativeText : null,
-              caption: t.caption && t.caption !== "" ? t.caption : null,
-              provider: "@strapi-community/strapi-provider-upload-google-cloud-storage",
-              isPublic: true,
-              createdAt: t.createdAt,
+              create: {
+                strapiId: t.id,
+                url: t.url,
+                bucket,
+                folderPath,
+                filename,
+                size: t.size,
+                width: t.width,
+                height: t.height,
+                mime: t.mime,
+                ext: t.ext,
+                alt: t.alternativeText && t.alternativeText !== "" ? t.alternativeText : null,
+                caption: t.caption && t.caption !== "" ? t.caption : null,
+                provider: "@strapi-community/strapi-provider-upload-google-cloud-storage",
+                isPublic: true,
+                createdAt: t.createdAt,
+              },
             },
           } : {}),
           ...(data.community?.connect[0] ? {
@@ -276,6 +285,9 @@ export default class ArticleController {
             }
           } : {}),
         },
+        include: {
+          thumbnail: true,
+        }
       });
       ctx.body = {
         data: {

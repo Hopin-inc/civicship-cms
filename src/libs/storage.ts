@@ -40,10 +40,10 @@ export function getPublicUrl(fileName: string, folderPath?: string, bucketName?:
 
 export function getFileInfoFromUrl(url: string) {
   const [_http, _domain, bucket, ...filePathArray] = url.split("/");
-  const fileName = filePathArray.pop();
+  const filename = filePathArray.pop();
   return {
     bucket,
-    filePath: filePathArray.join("/"),
-    fileName,
+    folderPath: filePathArray.join("/"),
+    filename,
   };
 }

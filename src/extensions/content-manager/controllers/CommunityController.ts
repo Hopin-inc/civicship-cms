@@ -112,7 +112,6 @@ export default class CommunityController {
           documentId: newCommunity.id,
           id: newCommunity.id,
           name: newCommunity.name,
-          image: newCommunity.image,
           bio: newCommunity.bio,
           createdAt: newCommunity.createdAt,
           updatedAt: newCommunity.updatedAt,
