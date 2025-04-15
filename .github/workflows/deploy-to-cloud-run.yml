@@ -1,0 +1,84 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      #  - develop
+      - feature/deployment
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: kyoso-dev
+    timeout-minutes: 30
+
+    env:
+      # GCP settings
+      GCP_REGION: ${{ secrets.GCP_REGION }}
+      # GCP service account credentials
+      SERVICE_ACCOUNT_CREDENTIAL_JSON: ${{ secrets.SERVICE_ACCOUNT_CREDENTIAL_JSON }}
+      # application settings
+      ARTIFACT_REGISTRY: ${{ secrets.ARTIFACT_REGISTRY }}
+      APPLICATION_NAME: ${{ secrets.APPLICATION_NAME }}
+      # Jumpbox settings
+      JUMPBOX_INSTANCE_NAME: ${{ secrets.JUMPBOX_INSTANCE_NAME }}
+      JUMPBOX_ZONE: ${{ secrets.JUMPBOX_ZONE }}
+      # application settings
+      APP_DB_URL: ${{ secrets.APP_DB_URL }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ env.SERVICE_ACCOUNT_CREDENTIAL_JSON }}
+
+    - name: Configure Docker for GCP Artifact Registry
+      run: |
+        gcloud auth configure-docker ${{ env.ARTIFACT_REGISTRY }}
+        gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
+
+    - name: db:generate
+      env:
+        DATABASE_URL: postgresql://${{ env.DB_USER }}:${{ env.DB_PASSWORD }}@localhost:5432/${{ env.DB_NAME }}
+      run: |
+        echo "--- Connecting to DB via jumpbox ---"
+        gcloud compute ssh ${{ env.JUMPBOX_INSTANCE_NAME }} \
+          --tunnel-through-iap \
+          --zone=${{ env.JUMPBOX_ZONE }} \
+          --quiet -- -N -L 5432:localhost:5432 &
+        SSH_PID=$!
+        sleep 60
+        for i in {1..5}; do
+          pg_isready -h localhost -p 5432 -d ${{ env.DB_NAME }} && break
+          sleep 60
+        done
+
+        echo "--- Running prisma generate ---"
+        yarn db:generate
+
+        echo "Killing SSH tunnel"
+        kill $SSH_PID
+
+    - name: Build Docker image
+      run: |
+        docker build -t ${{ env.ARTIFACT_REGISTRY }}/${{ env.APPLICATION_NAME }}:latest .
+
+    - name: Push Docker image to Artifact Registry
+      run: |
+        docker push ${{ env.ARTIFACT_REGISTRY }}/${{ env.APPLICATION_NAME }}:latest
+
+    # - name: Deploy to Cloud Run
+    #   id: 'deploy'
+    #   uses: 'google-github-actions/deploy-cloudrun@v2'
+    #   with:
+    #     service: ${{ env.APPLICATION_NAME }}
+    #     image: ${{ env.ARTIFACT_REGISTRY }}/${{ env.APPLICATION_NAME }}:latest
+    #     region: ${{ env.GCP_REGION }}
