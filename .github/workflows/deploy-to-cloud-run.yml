@@ -35,6 +35,10 @@ jobs:
       with:
         node-version: '18'
 
+    - name: Install dependencies
+      run: |
+        yarn install
+
     - name: Authenticate to Google Cloud
       uses: google-github-actions/auth@v1
       with:
