@@ -35,10 +35,6 @@ jobs:
       with:
         node-version: '18'
 
-    - name: Install dependencies
-      run: |
-        yarn install
-
     - name: Authenticate to Google Cloud
       uses: google-github-actions/auth@v1
       with:
@@ -48,28 +44,6 @@ jobs:
       run: |
         gcloud auth configure-docker ${{ env.ARTIFACT_REGISTRY }}
         gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
-
-    - name: db:generate
-      env:
-        DATABASE_URL: postgresql://${{ env.DB_USER }}:${{ env.DB_PASSWORD }}@localhost:5432/${{ env.DB_NAME }}
-      run: |
-        echo "--- Connecting to DB via jumpbox ---"
-        gcloud compute ssh ${{ env.JUMPBOX_INSTANCE_NAME }} \
-          --tunnel-through-iap \
-          --zone=${{ env.JUMPBOX_ZONE }} \
-          --quiet -- -N -L 5432:localhost:5432 &
-        SSH_PID=$!
-        sleep 60
-        for i in {1..5}; do
-          pg_isready -h localhost -p 5432 -d ${{ env.DB_NAME }} && break
-          sleep 60
-        done
-
-        echo "--- Running prisma generate ---"
-        yarn db:generate
-
-        echo "Killing SSH tunnel"
-        kill $SSH_PID
 
     - name: Build Docker image
       run: |
