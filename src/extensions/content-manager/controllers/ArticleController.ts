@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { FindControllerResponse, FindOneControllerResponse } from "../../../types/strapi";
 import { Article } from "../../../types/models";
 import CommunityController from "./CommunityController";
@@ -143,25 +143,28 @@ export default class ArticleController {
     }
     try {
       const { title, introduction, body, category, publishStatus, publishedAtOnDB: publishedAt, thumbnail: t } = data;
-      const { bucket, folderPath, filename } = getFileInfoFromUrl(t.url);
-      // @ts-ignore
-      const thumbnail: PrismaJson.ImageInfo | null = t ? {
-        strapiId: t.id,
-        url: t.url,
-        bucket,
-        folderPath,
-        filename,
-        size: t.size,
-        width: t.width,
-        height: t.height,
-        mime: t.mime,
-        ext: t.ext,
-        alternativeText: t.alt && t.alt !== "" ? t.alt : null,
-        caption: t.caption && t.caption !== "" ? t.caption : null,
-        provider: "@strapi-community/strapi-provider-upload-google-cloud-storage",
-        isPublic: true,
-        createdAt: t.createdAt,
-      } : null;
+      let thumbnail: Prisma.ImageCreateNestedOneWithoutArticlesInput | undefined = undefined;
+      if (t) {
+        const { bucket, folderPath, filename } = getFileInfoFromUrl(t.url);
+        thumbnail = {
+          create: {
+            strapiId: t.id,
+            url: t.url,
+            bucket,
+            folderPath,
+            filename,
+            size: t.size,
+            width: t.width,
+            height: t.height,
+            mime: t.mime,
+            ext: t.ext,
+            alt: t.alternativeText && t.alternativeText !== "" ? t.alternativeText : null,
+            caption: t.caption && t.caption !== "" ? t.caption : null,
+            isPublic: true,
+            createdAt: t.createdAt,
+          },
+        };
+      }
       const communityId = data.community?.connect[0].id;
       const newArticle = await prisma.article.create({
         data: {
@@ -171,9 +174,7 @@ export default class ArticleController {
           category,
           publishStatus,
           publishedAt,
-          thumbnail: {
-            create: thumbnail,
-          },
+          thumbnail,
           community: {
             connect: {
               id: communityId,
@@ -228,7 +229,7 @@ export default class ArticleController {
         return ctx.notFound(`Article not found: ${ id }`);
       }
       const { title, introduction, body, category, publishStatus, publishedAtOnDB: publishedAt, thumbnail: t } = data;
-      const { bucket, folderPath, filename } = getFileInfoFromUrl(t.url);
+      const { bucket, folderPath, filename } = getFileInfoFromUrl(t?.url);
       const updatedArticle = await prisma.article.update({
         where: { id },
         data: {
@@ -253,7 +254,6 @@ export default class ArticleController {
                 ext: t.ext,
                 alt: t.alternativeText && t.alternativeText !== "" ? t.alternativeText : null,
                 caption: t.caption && t.caption !== "" ? t.caption : null,
-                provider: "@strapi-community/strapi-provider-upload-google-cloud-storage",
                 isPublic: true,
                 createdAt: t.createdAt,
               },

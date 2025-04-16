@@ -117,7 +117,7 @@ export default class UserController {
         data: {
           name,
           slug,
-          currentPrefecture,
+          currentPrefecture: currentPrefecture ?? "OUTSIDE_SHIKOKU",
         },
       });
       ctx.body = {
@@ -126,6 +126,7 @@ export default class UserController {
           id: newUser.id,
           name: newUser.name,
           slug: newUser.slug,
+          currentPrefecture: newUser.currentPrefecture,
           createdAt: newUser.createdAt,
           updatedAt: newUser.updatedAt,
         },
@@ -153,6 +154,7 @@ export default class UserController {
         data: {
           ...(data.name ? { name: data.name } : {}),
           ...(data.slug ? { slug: data.slug } : {}),
+          ...(data.currentPrefecture ? { currentPrefecture: data.currentPrefecture } : {}),
         },
       });
       ctx.body = {
@@ -161,6 +163,7 @@ export default class UserController {
           id: updatedUser.id,
           name: updatedUser.name,
           slug: updatedUser.slug,
+          currentPrefecture: updatedUser.currentPrefecture,
           createdAt: updatedUser.createdAt,
           updatedAt: updatedUser.updatedAt,
         },
