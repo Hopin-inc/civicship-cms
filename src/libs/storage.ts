@@ -38,7 +38,14 @@ export function getPublicUrl(fileName: string, folderPath?: string, bucketName?:
   return `https://storage.googleapis.com/${ bucketName }/${ filePath }`;
 }
 
-export function getFileInfoFromUrl(url: string) {
+export function getFileInfoFromUrl(url?: string) {
+  if (!url) {
+    return {
+      bucket: undefined,
+      folderPath: undefined,
+      filename: undefined,
+    };
+  }
   const [_http, _domain, bucket, ...filePathArray] = url.split("/");
   const filename = filePathArray.pop();
   return {
