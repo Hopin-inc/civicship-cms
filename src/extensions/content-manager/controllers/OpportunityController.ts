@@ -1,17 +1,26 @@
-import { Prisma, PrismaClient } from '@prisma/client';
-import { FindControllerResponse, FindOneControllerResponse } from "../../../types/strapi";
-import { Opportunity } from "../../../types/models";
+import { Place, Prisma, PrismaClient } from '@prisma/client';
+import {
+  BaseResultNode,
+  FindControllerResponse,
+  FindOneControllerResponse,
+  Image,
+  WithRelationObject
+} from "../../../types/strapi";
+import { Community, Opportunity, User } from "../../../types/models";
 import CommunityController from "./CommunityController";
 import UserController from "./UserController";
+import { ImageDataTransformer } from "../../../utils/transformer";
+import PlaceController from "./PlaceController";
 
 const prisma = new PrismaClient();
 
 type RelationParams = {
   articleId?: string;
+  slotId?: string;
 };
 
 export default class OpportunityController {
-  static async find(ctx, { articleId }: RelationParams = {}) {
+  static async find(ctx, { articleId, slotId }: RelationParams = {}) {
     const { sort } = ctx.query;
     const page = parseInt(ctx.query.page ?? 1);
     const pageSize = parseInt(ctx.query.pageSize ?? 10);
@@ -33,23 +42,42 @@ export default class OpportunityController {
         },
       };
     }
+    if (slotId) {
+      where.slots = {
+        some: {
+          id: slotId,
+        },
+      };
+    }
 
     const [total, items] = await Promise.all([
       prisma.opportunity.count({ where }),
-      prisma.opportunity.findMany({ skip, take, where, orderBy }),
+      prisma.opportunity.findMany({
+        skip,
+        take,
+        where,
+        include: {
+          images: true,
+        },
+        orderBy,
+      }),
     ]);
 
-    const results = items.map((item) => ({
+    const results = await Promise.all(items.map(async (item) => ({
       id: item.id,
       documentId: item.id,
       title: item.title,
       description: item.description,
+      body: item.body,
       category: item.category,
+      images: await Promise.all(item.images.map(async (image) => await ImageDataTransformer.toStrapi(image))),
       communityId: item.communityId,
+      placeId: item.placeId,
+      requireApproval: item.requireApproval,
       createdByOnDB: item.createdBy,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
-    }));
+    })));
 
     const pageCount = Math.ceil(total / pageSize);
     ctx.body = {
@@ -66,10 +94,15 @@ export default class OpportunityController {
   static async findOne(ctx) {
     const { id } = ctx.params;
 
-    const opportunity = await prisma.opportunity.findUnique({ where: { id } });
+    const opportunity = await prisma.opportunity.findUnique({
+      where: { id },
+      include: {
+        images: true,
+      },
+    });
 
     if (!opportunity) {
-      return ctx.notFound(`Community not found: ${ id }`);
+      return ctx.notFound(`該当する機会が見つかりませんでした: ${ id }`);
     }
 
     ctx.body = {
@@ -78,8 +111,12 @@ export default class OpportunityController {
         documentId: opportunity.id,
         title: opportunity.title,
         description: opportunity.description,
+        body: opportunity.body,
         category: opportunity.category,
+        images: await Promise.all(opportunity.images.map(async image => await ImageDataTransformer.toStrapi(image))),
         communityId: opportunity.communityId,
+        placeId: opportunity.placeId,
+        requireApproval: opportunity.requireApproval,
         createdByOnDB: opportunity.createdBy,
         createdAt: opportunity.createdAt,
         updatedAt: opportunity.updatedAt,
@@ -92,15 +129,20 @@ export default class OpportunityController {
   }
 
   static async create(ctx) {
-    const { body: data } = ctx.request;
+    const data = ctx.request.body as Opportunity
+      & WithRelationObject<"images", Image>
+      & WithRelationObject<"community", Community>
+      & WithRelationObject<"createdByUserOnDB", User>
+      & WithRelationObject<"place", Place>;
     if (!data) {
-      return ctx.badRequest("No data provided");
+      return ctx.badRequest("データが入力されていません。");
     }
     try {
       const { title, description, category } = data;
       const communityId = data.community.connect[0].id;
-      const createdBy = data.createdByOnDB.connect[0].id;
-      const newOpportunity = await prisma.opportunity.create({
+      const placeId = data.place.connect[0].id;
+      const createdBy = data.createdByUserOnDB.connect[0].id;
+      const newData = await prisma.opportunity.create({
         data: {
           title,
           description,
@@ -110,45 +152,61 @@ export default class OpportunityController {
               id: communityId,
             },
           },
+          images: {
+            create: data.images.map((image) => ImageDataTransformer.fromStrapi(image)),
+          },
           createdByUser: {
             connect: {
               id: createdBy,
+            }
+          },
+          place: {
+            connect: {
+              id: placeId,
             }
           },
         },
       });
       ctx.body = {
         data: {
-          documentId: newOpportunity.id,
-          id: newOpportunity.id,
-          title: newOpportunity.title,
-          description: newOpportunity.description,
-          category: newOpportunity.category,
-          communityId: newOpportunity.communityId,
-          createdByOnDB: newOpportunity.createdBy,
-          createdAt: newOpportunity.createdAt,
-          updatedAt: newOpportunity.updatedAt,
-        },
+          documentId: newData.id,
+          id: newData.id,
+          title: newData.title,
+          description: newData.description,
+          body: newData.body,
+          category: newData.category,
+          requireApproval: newData.requireApproval,
+          images: [], // This will be fetched separately.
+          communityId: newData.communityId,
+          placeId: newData.placeId,
+          createdByOnDB: newData.createdBy,
+          createdAt: newData.createdAt,
+          updatedAt: newData.updatedAt,
+        } satisfies BaseResultNode & Opportunity,
         meta: {},
       };
     } catch (error) {
       console.error("Create Opportunity Error:", error);
-      return ctx.badRequest("Error creating opportunity");
+      return ctx.badRequest("データの作成に失敗しました。");
     }
   }
 
   static async update(ctx) {
     const { id } = ctx.params;
-    const { body: data } = ctx.request;
+    const data = ctx.request.body as Opportunity
+      & WithRelationObject<"images", Image>
+      & WithRelationObject<"community", Community>
+      & WithRelationObject<"createdByUserOnDB", User>
+      & WithRelationObject<"place", Place>;
     if (!data) {
-      return ctx.badRequest("No data provided");
+      return ctx.badRequest("データが入力されていません。");
     }
     try {
       const existing = await prisma.opportunity.findUnique({ where: { id } });
       if (!existing) {
-        return ctx.notFound(`Opportunity not found: ${ id }`);
+        return ctx.notFound(`該当する機会が見つかりませんでした: ${ id }`);
       }
-      const updatedCommunity = await prisma.opportunity.update({
+      const updatedData = await prisma.opportunity.update({
         where: { id },
         data: {
           ...(data.title ? { title: data.title } : {}),
@@ -161,33 +219,52 @@ export default class OpportunityController {
               }
             }
           } : {}),
-          ...(data.createdByOnDB?.connect[0] ? {
-            createdByUser: {
-              connect: {
-                id: data.createdByOnDB.connect[0].id
+          ...(data.createdByUserOnDB?.connect[0] ? {
+              createdByUser: {
+                connect: {
+                  id: data.createdByUserOnDB.connect[0].id
+                }
               }
-            }
-          } : {}
+            } : {}
+          ),
+          ...(data.place?.connect[0] ? {
+              place: {
+                connect: {
+                  id: data.place.connect[0].id
+                }
+              }
+            } : {}
+          ),
+          ...(data.images?.connect?.length || data.images?.disconnect?.length ? {
+              images: {
+                connect: data.images.connect.map(image => ({ id: image.id } )),
+                disconnect: data.images.disconnect.map(image => ({ id: image.id } )),
+              }
+            } : {}
           ),
         },
       });
       ctx.body = {
         data: {
-          documentId: updatedCommunity.id,
-          id: updatedCommunity.id,
-          title: updatedCommunity.title,
-          description: updatedCommunity.description,
-          category: updatedCommunity.category,
-          communityId: updatedCommunity.communityId,
-          createdByOnDB: updatedCommunity.createdBy,
-          createdAt: updatedCommunity.createdAt,
-          updatedAt: updatedCommunity.updatedAt,
-        },
+          documentId: updatedData.id,
+          id: updatedData.id,
+          title: updatedData.title,
+          description: updatedData.description,
+          body: updatedData.body,
+          category: updatedData.category,
+          requireApproval: updatedData.requireApproval,
+          images: [], // This will be fetched separately.
+          communityId: updatedData.communityId,
+          placeId: updatedData.placeId,
+          createdByOnDB: updatedData.createdBy,
+          createdAt: updatedData.createdAt,
+          updatedAt: updatedData.updatedAt,
+        } satisfies BaseResultNode & Opportunity,
         meta: {},
       };
     } catch (error) {
-      console.error("Update Community Error:", error);
-      return ctx.badRequest("Error updating community");
+      console.error("Update Opportunity Error:", error);
+      return ctx.badRequest("データの更新に失敗しました。");
     }
   }
 
@@ -196,7 +273,7 @@ export default class OpportunityController {
     try {
       const existing = await prisma.opportunity.findUnique({ where: { id } });
       if (!existing) {
-        return ctx.notFound(`Opportunity not found: ${ id }`);
+        return ctx.notFound(`該当する機会が見つかりませんでした: ${ id }`);
       }
       await prisma.opportunity.delete({ where: { id } });
       ctx.body = {
@@ -204,8 +281,8 @@ export default class OpportunityController {
         meta: {},
       };
     } catch (error) {
-      console.error("Delete Community Error:", error);
-      return ctx.badRequest("Error deleting opportunity");
+      console.error("Delete Opportunity Error:", error);
+      return ctx.badRequest("データの削除に失敗しました。");
     }
   }
 
@@ -224,6 +301,15 @@ export default class OpportunityController {
       return UserController.find(ctx, { opportunityId: id })
     } else {
       return UserController.find(ctx);
+    }
+  }
+
+  static async findPlaceRelations(ctx) {
+    const { id } = ctx.params;
+    if (id) {
+      return PlaceController.find(ctx, { opportunityId: id })
+    } else {
+      return PlaceController.find(ctx);
     }
   }
 };

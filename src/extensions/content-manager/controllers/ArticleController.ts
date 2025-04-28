@@ -1,10 +1,15 @@
-import { Prisma, PrismaClient } from '@prisma/client';
-import { FindControllerResponse, FindOneControllerResponse } from "../../../types/strapi";
-import { Article } from "../../../types/models";
+import { PrismaClient } from '@prisma/client';
+import {
+  BaseResultNode,
+  FindControllerResponse,
+  FindOneControllerResponse,
+  WithRelationObject
+} from "../../../types/strapi";
+import { Article, Community, Opportunity, User } from "../../../types/models";
 import CommunityController from "./CommunityController";
 import UserController from "./UserController";
 import OpportunityController from "./OpportunityController";
-import { generateSignedUrl, getFileInfoFromUrl } from "../../../libs/storage";
+import { ImageDataTransformer } from "../../../utils/transformer";
 
 const prisma = new PrismaClient();
 
@@ -44,26 +49,8 @@ export default class ArticleController {
       body: item.body,
       category: item.category,
       publishStatus: item.publishStatus,
-      thumbnail: item.thumbnail ? {
-        id: item.thumbnail.strapiId ?? -1,
-        name: item.thumbnail.filename,
-        size: item.thumbnail.size,
-        width: item.thumbnail.width,
-        height: item.thumbnail.height,
-        mime: item.thumbnail.mime,
-        ext: item.thumbnail.ext,
-        alternativeText: item.thumbnail.alt ?? null,
-        caption: item.thumbnail.caption ?? null,
-        url: item.thumbnail.isPublic
-          ? item.thumbnail.url
-          : await generateSignedUrl(item.thumbnail.filename, item.thumbnail.folderPath, item.thumbnail.bucket),
-        provider: "@strapi-community/strapi-provider-upload-google-cloud-storage",
-        createdAt: item.thumbnail.createdAt,
-      } : null,
-      community: {
-        ...item.community,
-        documentId: item.communityId,
-      },
+      thumbnail: item.thumbnail ? await ImageDataTransformer.toStrapi(item.thumbnail) : null,
+      communityId: item.communityId,
       publishedAtOnDB: item.publishedAt,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
@@ -93,7 +80,7 @@ export default class ArticleController {
     });
 
     if (!article) {
-      return ctx.notFound(`Article not found: ${ id }`);
+      return ctx.notFound(`該当する記事が見つかりませんでした: ${ id }`);
     }
 
     ctx.body = {
@@ -105,26 +92,8 @@ export default class ArticleController {
         body: article.body,
         category: article.category,
         publishStatus: article.publishStatus,
-        community: {
-          ...article.community,
-          documentId: article.communityId,
-        },
-        thumbnail: article.thumbnail ? {
-          id: article.thumbnail.strapiId ?? -1,
-          name: article.thumbnail.filename,
-          size: article.thumbnail.size,
-          width: article.thumbnail.width,
-          height: article.thumbnail.height,
-          mime: article.thumbnail.mime,
-          ext: article.thumbnail.ext,
-          alternativeText: article.thumbnail.alt ?? null,
-          caption: article.thumbnail.caption ?? null,
-          url: article.thumbnail.isPublic
-            ? article.thumbnail.url
-            : await generateSignedUrl(article.thumbnail.filename, article.thumbnail.folderPath, article.thumbnail.bucket),
-          provider: "@strapi-community/strapi-provider-upload-google-cloud-storage",
-          createdAt: article.thumbnail.createdAt,
-        } : null,
+        communityId: article.communityId,
+        thumbnail: article.thumbnail ? await ImageDataTransformer.toStrapi(article.thumbnail) : null,
         publishedAtOnDB: article.publishedAt,
         createdAt: article.createdAt,
         updatedAt: article.updatedAt,
@@ -137,36 +106,21 @@ export default class ArticleController {
   }
 
   static async create(ctx) {
-    const { body: data } = ctx.request;
+    const data = ctx.request.body as Article
+      & WithRelationObject<"community", Community>
+      & WithRelationObject<"authors", User>
+      & WithRelationObject<"relatedUsers", User>
+      & WithRelationObject<"opportunities", Opportunity>;
     if (!data) {
-      return ctx.badRequest("No data provided");
+      return ctx.badRequest("データが入力されていません。");
     }
     try {
       const { title, introduction, body, category, publishStatus, publishedAtOnDB: publishedAt, thumbnail: t } = data;
-      let thumbnail: Prisma.ImageCreateNestedOneWithoutArticlesInput | undefined = undefined;
-      if (t) {
-        const { bucket, folderPath, filename } = getFileInfoFromUrl(t.url);
-        thumbnail = {
-          create: {
-            strapiId: t.id,
-            url: t.url,
-            bucket,
-            folderPath,
-            filename,
-            size: t.size,
-            width: t.width,
-            height: t.height,
-            mime: t.mime,
-            ext: t.ext,
-            alt: t.alternativeText && t.alternativeText !== "" ? t.alternativeText : null,
-            caption: t.caption && t.caption !== "" ? t.caption : null,
-            isPublic: true,
-            createdAt: t.createdAt,
-          },
-        };
-      }
+      const thumbnail = t ? {
+        create: ImageDataTransformer.fromStrapi(t),
+      } : undefined;
       const communityId = data.community?.connect[0].id;
-      const newArticle = await prisma.article.create({
+      const newData = await prisma.article.create({
         data: {
           title,
           introduction,
@@ -196,41 +150,44 @@ export default class ArticleController {
       });
       ctx.body = {
         data: {
-          documentId: newArticle.id,
-          id: newArticle.id,
-          title: newArticle.title,
-          introduction: newArticle.introduction,
-          body: newArticle.body,
-          category: newArticle.category,
-          publishStatus: newArticle.publishStatus,
-          publishedAtOnDB: newArticle.publishedAt,
-          thumbnail: newArticle.thumbnail,
-          community: newArticle.communityId,
-          createdAt: newArticle.createdAt,
-          updatedAt: newArticle.updatedAt,
-        },
+          documentId: newData.id,
+          id: newData.id,
+          title: newData.title,
+          introduction: newData.introduction,
+          body: newData.body,
+          category: newData.category,
+          publishStatus: newData.publishStatus,
+          publishedAtOnDB: newData.publishedAt,
+          thumbnail: await ImageDataTransformer.toStrapi(newData.thumbnail),
+          communityId: newData.communityId,
+          createdAt: newData.createdAt,
+          updatedAt: newData.updatedAt,
+        } satisfies BaseResultNode & Article,
         meta: {},
       };
     } catch (error) {
       console.error("Create Article Error:", error);
-      return ctx.badRequest("Error creating article");
+      return ctx.badRequest("データの作成に失敗しました。");
     }
   }
 
   static async update(ctx) {
     const { id } = ctx.params;
-    const { body: data } = ctx.request;
+    const data = ctx.request.body as Article
+      & WithRelationObject<"community", Community>
+      & WithRelationObject<"authors", User>
+      & WithRelationObject<"relatedUsers", User>
+      & WithRelationObject<"opportunities", Opportunity>;
     if (!data) {
-      return ctx.badRequest("No data provided");
+      return ctx.badRequest("データが入力されていません。");
     }
     try {
       const existing = await prisma.article.findUnique({ where: { id } });
       if (!existing) {
-        return ctx.notFound(`Article not found: ${ id }`);
+        return ctx.notFound(`該当する記事が見つかりませんでした: ${ id }`);
       }
       const { title, introduction, body, category, publishStatus, publishedAtOnDB: publishedAt, thumbnail: t } = data;
-      const { bucket, folderPath, filename } = getFileInfoFromUrl(t?.url);
-      const updatedArticle = await prisma.article.update({
+      const updatedData = await prisma.article.update({
         where: { id },
         data: {
           ...(title ? { title } : {}),
@@ -241,22 +198,7 @@ export default class ArticleController {
           ...(publishedAt ? { publishedAt } : {}),
           ...(t ? {
             thumbnail: {
-              create: {
-                strapiId: t.id,
-                url: t.url,
-                bucket,
-                folderPath,
-                filename,
-                size: t.size,
-                width: t.width,
-                height: t.height,
-                mime: t.mime,
-                ext: t.ext,
-                alt: t.alternativeText && t.alternativeText !== "" ? t.alternativeText : null,
-                caption: t.caption && t.caption !== "" ? t.caption : null,
-                isPublic: true,
-                createdAt: t.createdAt,
-              },
+              create: ImageDataTransformer.fromStrapi(t),
             },
           } : {}),
           ...(data.community?.connect[0] ? {
@@ -291,24 +233,24 @@ export default class ArticleController {
       });
       ctx.body = {
         data: {
-          documentId: updatedArticle.id,
-          id: updatedArticle.id,
-          title: updatedArticle.title,
-          introduction: updatedArticle.introduction,
-          body: updatedArticle.body,
-          category: updatedArticle.category,
-          publishStatus: updatedArticle.publishStatus,
-          publishedAtOnDB: updatedArticle.publishedAt,
-          thumbnail: updatedArticle.thumbnail,
-          community: updatedArticle.communityId,
-          createdAt: updatedArticle.createdAt,
-          updatedAt: updatedArticle.updatedAt,
-        },
+          documentId: updatedData.id,
+          id: updatedData.id,
+          title: updatedData.title,
+          introduction: updatedData.introduction,
+          body: updatedData.body,
+          category: updatedData.category,
+          publishStatus: updatedData.publishStatus,
+          publishedAtOnDB: updatedData.publishedAt,
+          thumbnail: await ImageDataTransformer.toStrapi(updatedData.thumbnail),
+          communityId: updatedData.communityId,
+          createdAt: updatedData.createdAt,
+          updatedAt: updatedData.updatedAt,
+        } satisfies BaseResultNode & Article,
         meta: {},
       };
     } catch (error) {
       console.error("Update Article Error:", error);
-      return ctx.badRequest("Error updating article");
+      return ctx.badRequest("データの更新に失敗しました。");
     }
   }
 
@@ -317,7 +259,7 @@ export default class ArticleController {
     try {
       const existing = await prisma.article.findUnique({ where: { id } });
       if (!existing) {
-        return ctx.notFound(`Article not found: ${ id }`);
+        return ctx.notFound(`該当する記事が見つかりませんでした: ${ id }`);
       }
       await prisma.article.delete({ where: { id } });
       ctx.body = {
@@ -326,7 +268,7 @@ export default class ArticleController {
       };
     } catch (error) {
       console.error("Delete Article Error:", error);
-      return ctx.badRequest("Error deleting article");
+      return ctx.badRequest("データの削除に失敗しました。");
     }
   }
 

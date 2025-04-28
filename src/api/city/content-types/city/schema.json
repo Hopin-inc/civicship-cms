@@ -1,0 +1,31 @@
+{
+  "kind": "collectionType",
+  "collectionName": "t_cities",
+  "info": {
+    "singularName": "city",
+    "pluralName": "cities",
+    "displayName": "市区町村",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "places": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::place.place",
+      "mappedBy": "city",
+      "private": true,
+      "pluginOptions": {
+        "content-manager": {
+          "visible": false
+        }
+      }
+    }
+  }
+}

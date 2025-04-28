@@ -45,13 +45,23 @@ const opportunityRoutes: Route[] = [
   },
   {
     method: 'GET',
-    path: '/relations/api\\:\\:opportunity.opportunity/createdByOnDB',
+    path: '/relations/api\\:\\:opportunity.opportunity/createdByUserOnDB',
     handler: OpportunityController.findUserRelations,
   },
   {
     method: 'GET',
-    path: '/relations/api\\:\\:opportunity.opportunity/:id/createdByOnDB',
+    path: '/relations/api\\:\\:opportunity.opportunity/:id/createdByUserOnDB',
     handler: OpportunityController.findUserRelations,
+  },
+  {
+    method: 'GET',
+    path: '/relations/api\\:\\:opportunity.opportunity/place',
+    handler: OpportunityController.findPlaceRelations,
+  },
+  {
+    method: 'GET',
+    path: '/relations/api\\:\\:opportunity.opportunity/:id/place',
+    handler: OpportunityController.findPlaceRelations,
   },
 ];
 

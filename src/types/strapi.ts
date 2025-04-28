@@ -71,3 +71,12 @@ export type FindOneControllerResponse<T> = {
   data: T & BaseResultNode;
   meta: object & FindOneBaseMeta;
 };
+
+export type RelationObject<T> = {
+  connect?: (T & Partial<BaseResultNode>)[],
+  disconnect?: (T & Partial<BaseResultNode>)[],
+}
+
+export type WithRelationObject<K extends string, V> = {
+  [key in K]: RelationObject<V>;
+};
