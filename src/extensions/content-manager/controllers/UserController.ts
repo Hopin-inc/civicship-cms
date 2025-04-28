@@ -86,7 +86,7 @@ export default class UserController {
     const user = await prisma.user.findUnique({ where: { id } });
 
     if (!user) {
-      return ctx.notFound(`User not found: ${ id }`);
+      return ctx.notFound(`該当するユーザーが見つかりませんでした: ${ id }`);
     }
 
     ctx.body = {
@@ -109,7 +109,7 @@ export default class UserController {
   static async create(ctx) {
     const { body: data } = ctx.request;
     if (!data) {
-      return ctx.badRequest("No data provided");
+      return ctx.badRequest("データが入力されていません。");
     }
     try {
       const { name, slug, currentPrefecture } = data;
@@ -134,7 +134,7 @@ export default class UserController {
       };
     } catch (error) {
       console.error("Create User Error:", error);
-      return ctx.badRequest("Error creating user");
+      return ctx.badRequest("データの作成に失敗しました。");
     }
   }
 
@@ -142,12 +142,12 @@ export default class UserController {
     const { id } = ctx.params;
     const { body: data } = ctx.request;
     if (!data) {
-      return ctx.badRequest("No data provided");
+      return ctx.badRequest("データが入力されていません。");
     }
     try {
       const existing = await prisma.user.findUnique({ where: { id } });
       if (!existing) {
-        return ctx.notFound(`User not found: ${ id }`);
+        return ctx.notFound(`該当するユーザーが見つかりませんでした: ${ id }`);
       }
       const updatedUser = await prisma.user.update({
         where: { id },
@@ -171,7 +171,7 @@ export default class UserController {
       };
     } catch (error) {
       console.error("Update User Error:", error);
-      return ctx.badRequest("Error updating user");
+      return ctx.badRequest("データの更新に失敗しました。");
     }
   }
 
@@ -180,7 +180,7 @@ export default class UserController {
     try {
       const existing = await prisma.user.findUnique({ where: { id } });
       if (!existing) {
-        return ctx.notFound(`User not found: ${ id }`);
+        return ctx.notFound(`該当するユーザーが見つかりませんでした: ${ id }`);
       }
       await prisma.user.delete({ where: { id } });
       ctx.body = {
@@ -189,7 +189,7 @@ export default class UserController {
       };
     } catch (error) {
       console.error("Delete User Error:", error);
-      return ctx.badRequest("Error deleting user");
+      return ctx.badRequest("データの削除に失敗しました。");
     }
   }
 };

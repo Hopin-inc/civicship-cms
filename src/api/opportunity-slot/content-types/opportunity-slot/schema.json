@@ -1,0 +1,35 @@
+{
+  "kind": "collectionType",
+  "collectionName": "t_opportunity_slots",
+  "info": {
+    "singularName": "opportunity-slot",
+    "pluralName": "opportunity-slots",
+    "displayName": "機会の開催日",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "startsAt": {
+      "type": "datetime",
+      "required": true
+    },
+    "endsAt": {
+      "type": "datetime",
+      "required": true
+    },
+    "capacity": {
+      "type": "integer",
+      "required": false
+    },
+    "opportunity": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::opportunity.opportunity",
+      "inversedBy": "slots",
+      "mappedBy": "slots",
+      "required": true
+    }
+  }
+}

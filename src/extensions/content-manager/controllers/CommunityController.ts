@@ -7,12 +7,14 @@ const prisma = new PrismaClient();
 type RelationParams = {
   opportunityId?: string;
   articleId?: string;
+  placeId?: string;
 };
 
 export default class CommunityController {
   static async find(ctx, {
     opportunityId,
     articleId,
+    placeId,
   }: RelationParams = {}) {
     const { sort } = ctx.query;
     const page = parseInt(ctx.query.page ?? 1);
@@ -39,6 +41,13 @@ export default class CommunityController {
       where.articles = {
         some: {
           id: articleId,
+        },
+      };
+    }
+    if (placeId) {
+      where.places = {
+        some: {
+          id: placeId,
         },
       };
     }
@@ -75,7 +84,7 @@ export default class CommunityController {
     const community = await prisma.community.findUnique({ where: { id } });
 
     if (!community) {
-      return ctx.notFound(`Community not found: ${id}`);
+      return ctx.notFound(`該当するコミュニティが見つかりませんでした: ${id}`);
     }
 
     ctx.body = {
@@ -97,7 +106,7 @@ export default class CommunityController {
   static async create(ctx) {
     const { body: data } = ctx.request;
     if (!data) {
-      return ctx.badRequest("No data provided");
+      return ctx.badRequest("データが入力されていません。");
     }
     try {
       const { name, pointName } = data;
@@ -120,7 +129,7 @@ export default class CommunityController {
       };
     } catch (error) {
       console.error("Create Community Error:", error);
-      return ctx.badRequest("Error creating community");
+      return ctx.badRequest("データの作成に失敗しました。");
     }
   }
 
@@ -128,12 +137,12 @@ export default class CommunityController {
     const { id } = ctx.params;
     const { body: data } = ctx.request;
     if (!data) {
-      return ctx.badRequest("No data provided");
+      return ctx.badRequest("データが入力されていません。");
     }
     try {
       const existing = await prisma.community.findUnique({ where: { id } });
       if (!existing) {
-        return ctx.notFound(`Community not found: ${id}`);
+        return ctx.notFound(`該当するコミュニティが見つかりませんでした: ${id}`);
       }
       const updatedCommunity = await prisma.community.update({
         where: { id },
@@ -155,7 +164,7 @@ export default class CommunityController {
       };
     } catch (error) {
       console.error("Update Community Error:", error);
-      return ctx.badRequest("Error updating community");
+      return ctx.badRequest("データの更新に失敗しました。");
     }
   }
 
@@ -164,7 +173,7 @@ export default class CommunityController {
     try {
       const existing = await prisma.community.findUnique({ where: { id } });
       if (!existing) {
-        return ctx.notFound(`Community not found: ${id}`);
+        return ctx.notFound(`該当するコミュニティが見つかりませんでした: ${id}`);
       }
       await prisma.community.delete({ where: { id } });
       ctx.body = {
@@ -173,7 +182,7 @@ export default class CommunityController {
       };
     } catch (error) {
       console.error("Delete Community Error:", error);
-      return ctx.badRequest("Error deleting community");
+      return ctx.badRequest("データの削除に失敗しました。");
     }
   }
 };

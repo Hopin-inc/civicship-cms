@@ -5,20 +5,36 @@ export default [
     name: 'strapi::security',
     config: {
       contentSecurityPolicy: {
+        useDefaults: true,
         directives: {
           'default-src': ["'self'"],
-          'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
           'style-src': ["'self'", "'unsafe-inline'"],
+          'script-src': [
+            "'self'",
+            "'unsafe-inline'",
+            "'unsafe-eval'",
+            "https://*.basemaps.cartocdn.com",
+          ],
+          "media-src": [
+            "'self'",
+            "blob:",
+            "data:",
+            "https://*.basemaps.cartocdn.com",
+            "https://tile.openstreetmap.org",
+            "https://*.tile.openstreetmap.org",
+          ],
           'img-src': [
             "'self'",
             'data:',
             'blob:',
             'https://market-assets.strapi.io',
-            'https://storage.googleapis.com'
+            'https://storage.googleapis.com',
+            "https://*.basemaps.cartocdn.com",
+            "https://*.tile.openstreetmap.org",
+            "https://unpkg.com/leaflet@1.9.4/dist/images/",
           ],
-          'connect-src': ["'self'"],
+          'connect-src': ["'self'", "https:"],
           'font-src': ["'self'", 'data:'],
-          'media-src': ["'self'"],
           'object-src': ["'none'"],
           'frame-src': [],
         },
