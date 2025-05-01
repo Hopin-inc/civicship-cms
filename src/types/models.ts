@@ -1,4 +1,5 @@
 import { BaseResultNode, Image } from "./strapi";
+// @ts-ignore
 import { ArticleCategory, CurrentPrefecture, OpportunityCategory, PublishStatus } from ".prisma/client";
 
 export type Community = {
