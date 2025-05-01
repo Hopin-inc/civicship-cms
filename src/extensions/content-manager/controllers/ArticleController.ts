@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 import {
   BaseResultNode,
   FindControllerResponse,
