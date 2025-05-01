@@ -5,7 +5,7 @@
     "singularName": "user",
     "pluralName": "users",
     "displayName": "ユーザー",
-    "description": ""
+    "description": "LINEから登録したユーザーを指しています。"
   },
   "options": {
     "draftAndPublish": false

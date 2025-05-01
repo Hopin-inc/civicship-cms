@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 import {
   BaseResultNode,
   FindControllerResponse,
@@ -8,8 +7,7 @@ import {
 import { Opportunity, OpportunitySlot } from "../../../types/models";
 import OpportunityController from "./OpportunityController";
 import dayjs from "dayjs";
-
-const prisma = new PrismaClient();
+import {prismaClient} from "../../../prisma";
 
 export default class OpportunitySlotController {
   static async find(ctx) {
@@ -27,8 +25,8 @@ export default class OpportunitySlotController {
     }
 
     const [total, items] = await Promise.all([
-      prisma.opportunitySlot.count(),
-      prisma.opportunitySlot.findMany({
+      prismaClient.opportunitySlot.count(),
+      prismaClient.opportunitySlot.findMany({
         skip,
         take,
         orderBy,
@@ -70,7 +68,7 @@ export default class OpportunitySlotController {
   static async findOne(ctx) {
     const { id } = ctx.params;
 
-    const result = await prisma.opportunitySlot.findUnique({
+    const result = await prismaClient.opportunitySlot.findUnique({
       where: { id },
       include: {
         opportunity: true,
@@ -117,7 +115,7 @@ export default class OpportunitySlotController {
     }
     try {
       const opportunityId = data.opportunity?.connect[0].id;
-      const newData = await prisma.opportunitySlot.create({
+      const newData = await prismaClient.opportunitySlot.create({
         data: {
           startsAt,
           endsAt,
@@ -156,11 +154,11 @@ export default class OpportunitySlotController {
       return ctx.badRequest("開始日時は終了日時よりも前に設定してください。")
     }
     try {
-      const existing = await prisma.opportunitySlot.findUnique({ where: { id } });
+      const existing = await prismaClient.opportunitySlot.findUnique({ where: { id } });
       if (!existing) {
         return ctx.notFound(`該当する日程が見つかりませんでした: ${ id }`);
       }
-      const updatedData = await prisma.opportunitySlot.update({
+      const updatedData = await prismaClient.opportunitySlot.update({
         where: { id },
         data: {
           ...(startsAt ? { startsAt } : {}),
@@ -197,11 +195,11 @@ export default class OpportunitySlotController {
   static async delete(ctx) {
     const { id } = ctx.params;
     try {
-      const existing = await prisma.opportunitySlot.findUnique({ where: { id } });
+      const existing = await prismaClient.opportunitySlot.findUnique({ where: { id } });
       if (!existing) {
         return ctx.notFound(`該当する日程が見つかりませんでした: ${ id }`);
       }
-      await prisma.opportunitySlot.delete({ where: { id } });
+      await prismaClient.opportunitySlot.delete({ where: { id } });
       ctx.body = {
         data: null,
         meta: {},
