@@ -1,8 +1,7 @@
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { FindControllerResponse, FindOneControllerResponse } from "../../../types/strapi";
 import { User } from "../../../types/models";
-
-const prisma = new PrismaClient();
+import {prismaClient} from "../../../prisma";
 
 type RelationParams = {
   opportunityId?: string;
@@ -54,8 +53,8 @@ export default class UserController {
     console.log(where);
 
     const [total, items] = await Promise.all([
-      prisma.user.count({ where }),
-      prisma.user.findMany({ skip, take, where, orderBy }),
+      prismaClient.user.count({ where }),
+      prismaClient.user.findMany({ skip, take, where, orderBy }),
     ]);
 
     const results = items.map((item) => ({
@@ -83,7 +82,7 @@ export default class UserController {
   static async findOne(ctx) {
     const { id } = ctx.params;
 
-    const user = await prisma.user.findUnique({ where: { id } });
+    const user = await prismaClient.user.findUnique({ where: { id } });
 
     if (!user) {
       return ctx.notFound(`該当するユーザーが見つかりませんでした: ${ id }`);
@@ -113,7 +112,7 @@ export default class UserController {
     }
     try {
       const { name, slug, currentPrefecture } = data;
-      const newUser = await prisma.user.create({
+      const newUser = await prismaClient.user.create({
         data: {
           name,
           slug,
@@ -145,11 +144,11 @@ export default class UserController {
       return ctx.badRequest("データが入力されていません。");
     }
     try {
-      const existing = await prisma.user.findUnique({ where: { id } });
+      const existing = await prismaClient.user.findUnique({ where: { id } });
       if (!existing) {
         return ctx.notFound(`該当するユーザーが見つかりませんでした: ${ id }`);
       }
-      const updatedUser = await prisma.user.update({
+      const updatedUser = await prismaClient.user.update({
         where: { id },
         data: {
           ...(data.name ? { name: data.name } : {}),
@@ -178,11 +177,11 @@ export default class UserController {
   static async delete(ctx) {
     const { id } = ctx.params;
     try {
-      const existing = await prisma.user.findUnique({ where: { id } });
+      const existing = await prismaClient.user.findUnique({ where: { id } });
       if (!existing) {
         return ctx.notFound(`該当するユーザーが見つかりませんでした: ${ id }`);
       }
-      await prisma.user.delete({ where: { id } });
+      await prismaClient.user.delete({ where: { id } });
       ctx.body = {
         data: null,
         meta: {},

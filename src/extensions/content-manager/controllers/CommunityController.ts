@@ -1,8 +1,7 @@
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { FindControllerResponse, FindOneControllerResponse } from "../../../types/strapi";
 import { Community } from "../../../types/models";
-
-const prisma = new PrismaClient();
+import {prismaClient} from "../../../prisma";
 
 type RelationParams = {
   opportunityId?: string;
@@ -53,8 +52,8 @@ export default class CommunityController {
     }
 
     const [total, items] = await Promise.all([
-      prisma.community.count({ where }),
-      prisma.community.findMany({ skip, take, where, orderBy }),
+      prismaClient.community.count({ where }),
+      prismaClient.community.findMany({ skip, take, where, orderBy }),
     ]);
 
     const results = items.map((item) => ({
@@ -81,7 +80,7 @@ export default class CommunityController {
   static async findOne(ctx) {
     const { id } = ctx.params;
 
-    const community = await prisma.community.findUnique({ where: { id } });
+    const community = await prismaClient.community.findUnique({ where: { id } });
 
     if (!community) {
       return ctx.notFound(`該当するコミュニティが見つかりませんでした: ${id}`);
@@ -110,7 +109,7 @@ export default class CommunityController {
     }
     try {
       const { name, pointName } = data;
-      const newCommunity = await prisma.community.create({
+      const newCommunity = await prismaClient.community.create({
         data: {
           name,
           pointName,
@@ -140,11 +139,11 @@ export default class CommunityController {
       return ctx.badRequest("データが入力されていません。");
     }
     try {
-      const existing = await prisma.community.findUnique({ where: { id } });
+      const existing = await prismaClient.community.findUnique({ where: { id } });
       if (!existing) {
         return ctx.notFound(`該当するコミュニティが見つかりませんでした: ${id}`);
       }
-      const updatedCommunity = await prisma.community.update({
+      const updatedCommunity = await prismaClient.community.update({
         where: { id },
         data: {
           ...(data.name ? { name: data.name } : {}),
@@ -171,11 +170,11 @@ export default class CommunityController {
   static async delete(ctx) {
     const { id } = ctx.params;
     try {
-      const existing = await prisma.community.findUnique({ where: { id } });
+      const existing = await prismaClient.community.findUnique({ where: { id } });
       if (!existing) {
         return ctx.notFound(`該当するコミュニティが見つかりませんでした: ${id}`);
       }
-      await prisma.community.delete({ where: { id } });
+      await prismaClient.community.delete({ where: { id } });
       ctx.body = {
         data: null,
         meta: {},
