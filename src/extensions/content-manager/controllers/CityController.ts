@@ -1,8 +1,7 @@
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { FindControllerResponse, FindOneControllerResponse } from "../../../types/strapi";
 import { City } from "../../../types/models";
-
-const prisma = new PrismaClient();
+import {prismaClient} from "../../../prisma";
 
 type RelationParams = {
   placeId?: string;
@@ -55,8 +54,8 @@ export default class CityController {
     };
 
     const [total, items] = await Promise.all([
-      prisma.city.count({ where }),
-      prisma.city.findMany({ skip, take, where, include, orderBy }),
+      prismaClient.city.count({ where }),
+      prismaClient.city.findMany({ skip, take, where, include, orderBy }),
     ]);
 
     const results = items.map((item) => ({
@@ -80,7 +79,7 @@ export default class CityController {
   static async findOne(ctx) {
     const { id } = ctx.params;
 
-    const city = await prisma.city.findUnique({
+    const city = await prismaClient.city.findUnique({
       where: { code: id },
       include: { state: true },
     });

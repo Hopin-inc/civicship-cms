@@ -22,8 +22,18 @@ export default ({ env }) => {
       },
       schema: env('DB_SCHEMA', 'public'),
     },
-    pool: { min: env.int('DB_POOL_MIN', 2), max: env.int('DB_POOL_MAX', 10) },
+    pool: {
+      min: 0,
+      max: 10,
+      acquireTimeoutMillis: 60000,
+      idleTimeoutMillis: 30000,
+      reapIntervalMillis: 1000,
+      createRetryIntervalMillis: 200,
+    },
     acquireConnectionTimeout: env.int('DB_CONNECTION_TIMEOUT', 60000),
+    idleTimeoutMillis: env.int('DB_IDLE_TIMEOUT', 30000),
+    reapIntervalMillis: env.int('DB_REAP_INTERVAL', 1000),
+    createEntryIntervalMillis: env.int('DB_CREATE_ENTRY_INTERVAL', 200),
   };
 
   return {

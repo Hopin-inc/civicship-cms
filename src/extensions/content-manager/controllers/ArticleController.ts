@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 import {
   BaseResultNode,
   FindControllerResponse,
@@ -10,8 +9,7 @@ import CommunityController from "./CommunityController";
 import UserController from "./UserController";
 import OpportunityController from "./OpportunityController";
 import { ImageDataTransformer } from "../../../utils/transformer";
-
-const prisma = new PrismaClient();
+import {prismaClient} from "../../../prisma";
 
 export default class ArticleController {
   static async find(ctx) {
@@ -29,8 +27,8 @@ export default class ArticleController {
     }
 
     const [total, items] = await Promise.all([
-      prisma.article.count(),
-      prisma.article.findMany({
+      prismaClient.article.count(),
+      prismaClient.article.findMany({
         skip,
         take,
         orderBy,
@@ -71,7 +69,7 @@ export default class ArticleController {
   static async findOne(ctx) {
     const { id } = ctx.params;
 
-    const article = await prisma.article.findUnique({
+    const article = await prismaClient.article.findUnique({
       where: { id },
       include: {
         community: true,
@@ -120,7 +118,7 @@ export default class ArticleController {
         create: ImageDataTransformer.fromStrapi(t),
       } : undefined;
       const communityId = data.community?.connect[0].id;
-      const newData = await prisma.article.create({
+      const newData = await prismaClient.article.create({
         data: {
           title,
           introduction,
@@ -182,12 +180,12 @@ export default class ArticleController {
       return ctx.badRequest("データが入力されていません。");
     }
     try {
-      const existing = await prisma.article.findUnique({ where: { id } });
+      const existing = await prismaClient.article.findUnique({ where: { id } });
       if (!existing) {
         return ctx.notFound(`該当する記事が見つかりませんでした: ${ id }`);
       }
       const { title, introduction, body, category, publishStatus, publishedAtOnDB: publishedAt, thumbnail: t } = data;
-      const updatedData = await prisma.article.update({
+      const updatedData = await prismaClient.article.update({
         where: { id },
         data: {
           ...(title ? { title } : {}),
@@ -257,11 +255,11 @@ export default class ArticleController {
   static async delete(ctx) {
     const { id } = ctx.params;
     try {
-      const existing = await prisma.article.findUnique({ where: { id } });
+      const existing = await prismaClient.article.findUnique({ where: { id } });
       if (!existing) {
         return ctx.notFound(`該当する記事が見つかりませんでした: ${ id }`);
       }
-      await prisma.article.delete({ where: { id } });
+      await prismaClient.article.delete({ where: { id } });
       ctx.body = {
         data: null,
         meta: {},

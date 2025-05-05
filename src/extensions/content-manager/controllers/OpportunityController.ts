@@ -1,4 +1,4 @@
-import { Place, Prisma, PrismaClient } from '@prisma/client';
+import { Place, Prisma } from '@prisma/client';
 import {
   BaseResultNode,
   FindControllerResponse,
@@ -11,8 +11,7 @@ import CommunityController from "./CommunityController";
 import UserController from "./UserController";
 import { ImageDataTransformer } from "../../../utils/transformer";
 import PlaceController from "./PlaceController";
-
-const prisma = new PrismaClient();
+import {prismaClient} from "../../../prisma";
 
 type RelationParams = {
   articleId?: string;
@@ -51,8 +50,8 @@ export default class OpportunityController {
     }
 
     const [total, items] = await Promise.all([
-      prisma.opportunity.count({ where }),
-      prisma.opportunity.findMany({
+      prismaClient.opportunity.count({ where }),
+      prismaClient.opportunity.findMany({
         skip,
         take,
         where,
@@ -94,7 +93,7 @@ export default class OpportunityController {
   static async findOne(ctx) {
     const { id } = ctx.params;
 
-    const opportunity = await prisma.opportunity.findUnique({
+    const opportunity = await prismaClient.opportunity.findUnique({
       where: { id },
       include: {
         images: true,
@@ -142,7 +141,7 @@ export default class OpportunityController {
       const communityId = data.community.connect[0].id;
       const placeId = data.place.connect[0].id;
       const createdBy = data.createdByUserOnDB.connect[0].id;
-      const newData = await prisma.opportunity.create({
+      const newData = await prismaClient.opportunity.create({
         data: {
           title,
           description,
@@ -202,11 +201,11 @@ export default class OpportunityController {
       return ctx.badRequest("データが入力されていません。");
     }
     try {
-      const existing = await prisma.opportunity.findUnique({ where: { id } });
+      const existing = await prismaClient.opportunity.findUnique({ where: { id } });
       if (!existing) {
         return ctx.notFound(`該当する機会が見つかりませんでした: ${ id }`);
       }
-      const updatedData = await prisma.opportunity.update({
+      const updatedData = await prismaClient.opportunity.update({
         where: { id },
         data: {
           ...(data.title ? { title: data.title } : {}),
@@ -271,11 +270,11 @@ export default class OpportunityController {
   static async delete(ctx) {
     const { id } = ctx.params;
     try {
-      const existing = await prisma.opportunity.findUnique({ where: { id } });
+      const existing = await prismaClient.opportunity.findUnique({ where: { id } });
       if (!existing) {
         return ctx.notFound(`該当する機会が見つかりませんでした: ${ id }`);
       }
-      await prisma.opportunity.delete({ where: { id } });
+      await prismaClient.opportunity.delete({ where: { id } });
       ctx.body = {
         data: null,
         meta: {},

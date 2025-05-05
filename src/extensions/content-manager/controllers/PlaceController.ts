@@ -1,10 +1,9 @@
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { BaseResultNode, FindControllerResponse, FindOneControllerResponse } from "../../../types/strapi";
 import { Place } from "../../../types/models";
 import CommunityController from "./CommunityController";
 import CityController from "./CityController";
-
-const prisma = new PrismaClient();
+import {prismaClient} from "../../../prisma";
 
 type RelationParams = {
   opportunityId?: string;
@@ -35,8 +34,8 @@ export default class PlaceController {
     }
 
     const [total, items] = await Promise.all([
-      prisma.place.count({ where }),
-      prisma.place.findMany({ skip, take, where, orderBy }),
+      prismaClient.place.count({ where }),
+      prismaClient.place.findMany({ skip, take, where, orderBy }),
     ]);
 
     const results = items.map((item) => ({
@@ -69,7 +68,7 @@ export default class PlaceController {
   static async findOne(ctx) {
     const { id } = ctx.params;
 
-    const place = await prisma.place.findUnique({ where: { id } });
+    const place = await prismaClient.place.findUnique({ where: { id } });
 
     if (!place) {
       return ctx.notFound(`該当する拠点が見つかりませんでした: ${ id }`);
@@ -106,7 +105,7 @@ export default class PlaceController {
       const { name, address, location: { lat: longitude, lng: latitude } } = data;
       const cityCode = data.city.connect[0].id;
       const communityId = data.community.connect[0].id;
-      const newPlace = await prisma.place.create({
+      const newPlace = await prismaClient.place.create({
         data: {
           name,
           address,
@@ -147,11 +146,11 @@ export default class PlaceController {
       return ctx.badRequest("データが入力されていません。");
     }
     try {
-      const existing = await prisma.place.findUnique({ where: { id } });
+      const existing = await prismaClient.place.findUnique({ where: { id } });
       if (!existing) {
         return ctx.notFound(`該当する拠点が見つかりませんでした: ${ id }`);
       }
-      const updatedPlace = await prisma.place.update({
+      const updatedPlace = await prismaClient.place.update({
         where: { id },
         data: {
           ...(data.name ? { name: data.name } : {}),
@@ -200,11 +199,11 @@ export default class PlaceController {
   static async delete(ctx) {
     const { id } = ctx.params;
     try {
-      const existing = await prisma.place.findUnique({ where: { id } });
+      const existing = await prismaClient.place.findUnique({ where: { id } });
       if (!existing) {
         return ctx.notFound(`該当する拠点が見つかりませんでした: ${ id }`);
       }
-      await prisma.place.delete({ where: { id } });
+      await prismaClient.place.delete({ where: { id } });
       ctx.body = {
         data: null,
         meta: {},

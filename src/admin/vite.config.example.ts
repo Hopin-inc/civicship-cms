@@ -1,3 +1,4 @@
+// @ts-ignore
 import { mergeConfig, type UserConfig } from 'vite';
 
 export default (config: UserConfig) => {

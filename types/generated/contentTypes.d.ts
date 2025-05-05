@@ -514,7 +514,7 @@ export interface ApiOpportunitySlotOpportunitySlot
   collectionName: 't_opportunity_slots';
   info: {
     description: '';
-    displayName: '\u6A5F\u4F1A\u306E\u958B\u50AC\u65E5';
+    displayName: '\u52DF\u96C6\u306E\u958B\u50AC\u65E5';
     pluralName: 'opportunity-slots';
     singularName: 'opportunity-slot';
   };
@@ -668,7 +668,7 @@ export interface ApiPlacePlace extends Struct.CollectionTypeSchema {
 export interface ApiUserUser extends Struct.CollectionTypeSchema {
   collectionName: 't_users';
   info: {
-    description: '';
+    description: 'LINE\u304B\u3089\u767B\u9332\u3057\u305F\u30E6\u30FC\u30B6\u30FC\u3092\u6307\u3057\u3066\u3044\u307E\u3059\u3002';
     displayName: '\u30E6\u30FC\u30B6\u30FC';
     pluralName: 'users';
     singularName: 'user';
