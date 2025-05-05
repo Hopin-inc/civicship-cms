@@ -25,6 +25,18 @@
       "type": "string",
       "required": true
     },
+    "currentPrefecture": {
+      "type": "enumeration",
+      "enum": [
+        "KAGAWA",
+        "TOKUSHIMA",
+        "EHIME",
+        "KOCHI",
+        "OUTSIDE_SHIKOKU"
+      ],
+      "default": "QUEST",
+      "required": true
+    },
     "articlesWrittenByMe": {
       "type": "relation",
       "relation": "manyToMany",

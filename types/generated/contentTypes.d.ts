@@ -700,6 +700,11 @@ export interface ApiUserUser extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    currentPrefecture: Schema.Attribute.Enumeration<
+      ['KAGAWA', 'TOKUSHIMA', 'EHIME', 'KOCHI', 'OUTSIDE_SHIKOKU']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'QUEST'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::user.user'> &
       Schema.Attribute.Private;
