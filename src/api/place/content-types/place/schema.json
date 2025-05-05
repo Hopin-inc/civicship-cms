@@ -1,0 +1,59 @@
+{
+  "kind": "collectionType",
+  "collectionName": "t_places",
+  "info": {
+    "singularName": "place",
+    "pluralName": "places",
+    "displayName": "拠点",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "location": {
+      "type": "customField",
+      "options": {
+        "info": true
+      },
+      "customField": "plugin::strapi-location-picker.location-picker",
+      "required": true
+    },
+    "address": {
+      "type": "string",
+      "required": true
+    },
+    "city": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::city.city",
+      "required": true,
+      "mappedBy": "places",
+      "inversedBy": "places"
+    },
+    "community": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::community.community",
+      "required": true,
+      "mappedBy": "places",
+      "inversedBy": "places"
+    },
+    "opportunities": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::opportunity.opportunity",
+      "mappedBy": "place",
+      "private": true,
+      "pluginOptions": {
+        "content-manager": {
+          "visible": false
+        }
+      }
+    }
+  }
+}

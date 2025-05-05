@@ -1,0 +1,65 @@
+{
+  "kind": "collectionType",
+  "collectionName": "t_users",
+  "info": {
+    "singularName": "user",
+    "pluralName": "users",
+    "displayName": "ユーザー",
+    "description": "LINEから登録したユーザーを指しています。"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "createdAt": {
+      "type": "datetime"
+    },
+    "updatedAt": {
+      "type": "datetime"
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "string",
+      "required": true
+    },
+    "articlesWrittenByMe": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::article.article",
+      "private": true,
+      "pluginOptions": {
+        "content-manager": {
+          "visible": false
+        }
+      },
+      "mappedBy": "authors"
+    },
+    "articlesAboutMe": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::article.article",
+      "private": true,
+      "pluginOptions": {
+        "content-manager": {
+          "visible": false
+        }
+      },
+      "mappedBy": "relatedUsers"
+    },
+    "opportunitiesCreatedByMe": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::opportunity.opportunity",
+      "mappedBy": "createdByOnDB",
+      "private": true,
+      "pluginOptions": {
+        "content-manager": {
+          "visible": false
+        }
+      }
+    }
+  }
+}

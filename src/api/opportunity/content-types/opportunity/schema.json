@@ -1,0 +1,104 @@
+{
+  "kind": "collectionType",
+  "collectionName": "t_opportunities",
+  "info": {
+    "singularName": "opportunity",
+    "pluralName": "opportunities",
+    "displayName": "機会 (体験/クエスト)",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "string",
+      "required": true
+    },
+    "category": {
+      "type": "enumeration",
+      "enum": [
+        "QUEST",
+        "EVENT",
+        "ACTIVITY"
+      ],
+      "default": "QUEST",
+      "required": true
+    },
+    "requireApproval": {
+      "type": "boolean",
+      "required": false
+    },
+    "body": {
+      "type": "text",
+      "required": true
+    },
+    "pointsToEarn": {
+      "type": "integer",
+      "required": false
+    },
+    "feeRequired": {
+      "type": "integer",
+      "required": false
+    },
+    "images": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "slots": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::opportunity-slot.opportunity-slot",
+      "mappedBy": "opportunity",
+      "private": true,
+      "pluginOptions": {
+        "content-manager": {
+          "visible": false
+        }
+      }
+    },
+    "articles": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::article.article",
+      "private": true,
+      "pluginOptions": {
+        "content-manager": {
+          "visible": false
+        }
+      },
+      "mappedBy": "opportunities"
+    },
+    "community": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::community.community",
+      "inversedBy": "opportunities",
+      "mappedBy": "opportunities",
+      "required": true
+    },
+    "place": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::place.place",
+      "inversedBy": "opportunities",
+      "mappedBy": "opportunities",
+      "required": true
+    },
+    "createdByUserOnDB": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::user.user",
+      "inversedBy": "opportunitiesCreatedByMe",
+      "required": true
+    }
+  }
+}

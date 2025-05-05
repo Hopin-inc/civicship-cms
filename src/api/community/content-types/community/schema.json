@@ -1,0 +1,65 @@
+{
+  "kind": "collectionType",
+  "collectionName": "t_communities",
+  "info": {
+    "singularName": "community",
+    "pluralName": "communities",
+    "displayName": "コミュニティ",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "createdAt": {
+      "type": "datetime"
+    },
+    "updatedAt": {
+      "type": "datetime"
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "pointName": {
+      "type": "string",
+      "required": true
+    },
+    "articles": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::article.article",
+      "private": true,
+      "pluginOptions": {
+        "content-manager": {
+          "visible": false
+        }
+      },
+      "mappedBy": "community"
+    },
+    "opportunities": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::opportunity.opportunity",
+      "mappedBy": "community",
+      "private": true,
+      "pluginOptions": {
+        "content-manager": {
+          "visible": false
+        }
+      }
+    },
+    "places": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::place.place",
+      "mappedBy": "community",
+      "private": true,
+      "pluginOptions": {
+        "content-manager": {
+          "visible": false
+        }
+      }
+    }
+  }
+}
