@@ -3,7 +3,8 @@ name: Deploy to Cloud Run
 on:
   push:
     branches:
-      - master
+      # - master
+      - temp/deploy-to-prod
 
 jobs:
   deploy:
