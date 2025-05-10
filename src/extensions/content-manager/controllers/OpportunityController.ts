@@ -137,7 +137,7 @@ export default class OpportunityController {
       return ctx.badRequest("データが入力されていません。");
     }
     try {
-      const { title, description, category } = data;
+      const { title, description, category, body, requireApproval } = data;
       const communityId = data.community.connect[0].id;
       const placeId = data.place.connect[0].id;
       const createdBy = data.createdByUserOnDB.connect[0].id;
@@ -146,14 +146,18 @@ export default class OpportunityController {
           title,
           description,
           category,
+          body,
+          requireApproval,
           community: {
             connect: {
               id: communityId,
             },
           },
-          images: {
-            create: data.images.map((image) => ImageDataTransformer.fromStrapi(image)),
-          },
+          ...(data.images ? {
+            images: {
+              create: data.images.map((image) => ImageDataTransformer.fromStrapi(image)),
+            }
+          } : {}),
           createdByUser: {
             connect: {
               id: createdBy,
