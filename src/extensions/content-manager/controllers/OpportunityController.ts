@@ -211,7 +211,7 @@ export default class OpportunityController {
           ...(data.title ? { title: data.title } : {}),
           ...(data.description ? { description: data.description } : {}),
           ...(data.category ? { category: data.category } : {}),
-          ...(data.requireApproval ? { requireApproval: data.requireApproval } : {}),
+          ...(data.requireApproval !== undefined ? { requireApproval: data.requireApproval } : {}),
           ...(data.body ? { body: data.body } : {}),
           ...(data.community?.connect[0] ? {
             community: {
