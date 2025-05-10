@@ -115,7 +115,7 @@ export default class UserController {
       const newUser = await prismaClient.user.create({
         data: {
           name,
-          slug,
+          slug: slug ?? "",
           currentPrefecture: currentPrefecture ?? "OUTSIDE_SHIKOKU",
         },
       });
