@@ -242,8 +242,10 @@ export default class OpportunityController {
           ),
           ...(data.images?.connect?.length || data.images?.disconnect?.length ? {
               images: {
-                connect: data.images.connect.map(image => ({ id: image.id } )),
-                disconnect: data.images.disconnect.map(image => ({ id: image.id } )),
+                connect: data.images.connect
+                  .filter(image => !existing.images?.some(existingImage => existingImage.id === image.id))
+                  .map(image => ({ id: image.id })),
+                disconnect: data.images.disconnect.map(image => ({ id: image.id })),
               }
             } : 
             Array.isArray(data.images) && data.images.length > 0 ? {
