@@ -205,50 +205,157 @@ export default class OpportunityController {
       return ctx.badRequest("データが入力されていません。");
     }
     try {
-      const existing = await prismaClient.opportunity.findUnique({ where: { id } });
+      const existing = await prismaClient.opportunity.findUnique({ 
+        where: { id },
+        include: { images: true }
+      });
       if (!existing) {
         return ctx.notFound(`該当する機会が見つかりませんでした: ${ id }`);
       }
+
+      const updateData: {
+        title?: string;
+        description?: string;
+        category?: any;
+        requireApproval?: boolean;
+        body?: string;
+        community?: { connect: { id: string } };
+        createdByUser?: { connect: { id: string } };
+        place?: { connect: { id: string } };
+        images?: {
+          connect?: { id: string }[];
+          create?: any[];
+        };
+      } = {
+        ...(data.title ? { title: data.title } : {}),
+        ...(data.description ? { description: data.description } : {}),
+        ...(data.category ? { category: data.category } : {}),
+        ...(data.requireApproval !== undefined ? { requireApproval: data.requireApproval } : {}),
+        ...(data.body ? { body: data.body } : {}),
+        ...(data.community?.connect?.[0]?.id ? {
+          community: {
+            connect: {
+              id: data.community.connect[0].id
+            }
+          }
+        } : {}),
+        ...(data.createdByUserOnDB?.connect?.[0]?.id ? {
+          createdByUser: {
+            connect: {
+              id: data.createdByUserOnDB.connect[0].id
+            }
+          }
+        } : {}),
+        ...(data.place?.connect?.[0]?.id ? {
+          place: {
+            connect: {
+              id: data.place.connect[0].id
+            }
+          }
+        } : {})
+      };
+
+      try {
+        console.log("Existing Images:", existing.images);
+
+        const inputImages = [];
+
+        if (data.images && Array.isArray(data.images)) {
+          data.images.forEach(img => {
+            if (img && typeof img === 'object' && img.url) {
+              inputImages.push(img);
+            }
+          });
+        }
+
+        if (data.images?.connect && Array.isArray(data.images.connect)) {
+          data.images.connect.forEach(img => {
+            if (img && typeof img === 'object' && img.id) {
+              inputImages.push(img);
+            }
+          });
+        }
+
+        console.log("Data Images:", inputImages);
+
+        const uniqueUrlMap = new Map();
+        inputImages.forEach(img => {
+          if (img.url) {
+            uniqueUrlMap.set(img.url, img);
+          } else if (img.id) {
+            uniqueUrlMap.set(`id:${img.id}`, img);
+          }
+        });
+
+        const uniqueImages = Array.from(uniqueUrlMap.values());
+
+        const finalConnect = [];
+        const finalCreate = [];
+
+        for (const image of uniqueImages) {
+          if (typeof image.id === 'number' && image.id !== -1) {
+            const found = await prismaClient.image.findUnique({ where: { id: String(image.id) } });
+            if (found) {
+              finalConnect.push({ id: String(image.id) });
+            } else {
+              const transformed = ImageDataTransformer.fromStrapi(image);
+              finalCreate.push(transformed);
+            }
+          }
+        }
+
+        const imageOperations: {
+          disconnect?: { id: string }[];
+          connect?: { id: string }[];
+          create?: any[];
+        } = {};
+
+        if (existing.images && existing.images.length > 0) {
+          imageOperations.disconnect = existing.images.map(img => ({
+            id: String(img.id)
+          }));
+        }
+
+        const connectIds = finalConnect.map(c => c.id);
+        const validImages = await prismaClient.image.findMany({
+          where: { id: { in: connectIds } },
+          select: { id: true }
+        });
+        const validIdSet = new Set(validImages.map(img => img.id));
+
+        const seen = new Set<string>();
+        const validConnect = finalConnect.filter(c => {
+          if (!validIdSet.has(c.id)) return false;
+          if (seen.has(c.id)) return false;
+          seen.add(c.id);
+          return true;
+        });
+
+        if (validConnect.length > 0) {
+          imageOperations.connect = validConnect;
+        }
+
+
+        if (finalCreate.length > 0) {
+          imageOperations.create = finalCreate;
+        }
+
+        if (Object.keys(imageOperations).length > 0) {
+          if (imageOperations.connect) {
+            console.log("Final connect IDs:", imageOperations.connect.map(img => typeof img.id === 'string' ? 'string:' + img.id : typeof img.id + ':' + img.id));
+          }
+          updateData.images = imageOperations;
+        }
+
+      } catch (imageError) {
+        console.error("Error processing images:", imageError);
+      }
+
       const updatedData = await prismaClient.opportunity.update({
         where: { id },
-        data: {
-          ...(data.title ? { title: data.title } : {}),
-          ...(data.description ? { description: data.description } : {}),
-          ...(data.category ? { category: data.category } : {}),
-          ...(data.requireApproval !== undefined ? { requireApproval: data.requireApproval } : {}),
-          ...(data.body ? { body: data.body } : {}),
-          ...(data.community?.connect[0] ? {
-            community: {
-              connect: {
-                id: data.community.connect[0].id
-              }
-            }
-          } : {}),
-          ...(data.createdByUserOnDB?.connect[0] ? {
-              createdByUser: {
-                connect: {
-                  id: data.createdByUserOnDB.connect[0].id
-                }
-              }
-            } : {}
-          ),
-          ...(data.place?.connect[0] ? {
-              place: {
-                connect: {
-                  id: data.place.connect[0].id
-                }
-              }
-            } : {}
-          ),
-          ...(data.images?.connect?.length || data.images?.disconnect?.length ? {
-              images: {
-                connect: data.images.connect.map(image => ({ id: image.id } )),
-                disconnect: data.images.disconnect.map(image => ({ id: image.id } )),
-              }
-            } : {}
-          ),
-        },
+        data: updateData,
       });
+
       ctx.body = {
         data: {
           documentId: updatedData.id,
