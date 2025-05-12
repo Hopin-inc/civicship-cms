@@ -244,43 +244,65 @@ export default class OpportunityController {
 
       const imageOperations = {};
 
+      const existingImageMap = new Map();
       try {
         if (existing.images && Array.isArray(existing.images) && existing.images.length > 0) {
+          existing.images.forEach(img => {
+            if (img.url) {
+              existingImageMap.set(img.url, img);
+            }
+          });
+          
           imageOperations['disconnect'] = existing.images.map(image => ({ id: image.id }));
         }
       } catch (imageError) {
-        console.error("Error disconnecting existing images:", imageError);
+        console.error("Error processing existing images:", imageError);
       }
+
+      const finalConnect = [];
+      const finalCreate = [];
 
       try {
         if (data.images && data.images.connect && Array.isArray(data.images.connect) && data.images.connect.length > 0) {
-          imageOperations['connect'] = data.images.connect
+          data.images.connect
             .filter(image => image && image.id) // Ensure valid image objects with IDs
-            .map(image => ({ id: image.id }));
+            .forEach(image => {
+              finalConnect.push({ id: image.id });
+            });
         }
-      } catch (imageError) {
-        console.error("Error connecting images:", imageError);
-      }
 
-      try {
         if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-          const newImages = data.images.filter(image => 
-            image && typeof image === 'object' && !image.id
-          );
-          
-          if (newImages.length > 0) {
-            imageOperations['create'] = newImages.map(image => {
-              try {
-                return ImageDataTransformer.fromStrapi(image);
-              } catch (transformError) {
-                console.error("Error transforming image:", transformError, image);
-                return null;
+          data.images.forEach(image => {
+            if (!image || typeof image !== 'object') return;
+            
+            if (image.id && image.id !== -1) {
+              finalConnect.push({ id: image.id });
+            } 
+            else if (image.url) {
+              const matched = existingImageMap.get(image.url);
+              if (matched) {
+                finalConnect.push({ id: matched.id });
+              } else {
+                try {
+                  const transformed = ImageDataTransformer.fromStrapi(image);
+                  finalCreate.push(transformed);
+                } catch (transformError) {
+                  console.error("Error transforming image:", transformError, image);
+                }
               }
-            }).filter(Boolean); // Remove any null entries from failed transformations
-          }
+            }
+          });
+        }
+
+        if (finalConnect.length > 0) {
+          imageOperations['connect'] = finalConnect;
+        }
+
+        if (finalCreate.length > 0) {
+          imageOperations['create'] = finalCreate;
         }
       } catch (imageError) {
-        console.error("Error creating new images:", imageError);
+        console.error("Error processing images:", imageError);
       }
 
       if (Object.keys(imageOperations).length > 0) {
