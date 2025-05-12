@@ -247,7 +247,7 @@ export default class OpportunityController {
               }
             } : {}
           ),
-          ...(data.images && Array.isArray(data.images) && data.images.length > 0 ? {
+          ...(Array.isArray(data.images) && data.images.length > 0 ? {
             images: {
               create: data.images.map((image) => ImageDataTransformer.fromStrapi(image)),
             }
