@@ -205,7 +205,10 @@ export default class OpportunityController {
       return ctx.badRequest("データが入力されていません。");
     }
     try {
-      const existing = await prismaClient.opportunity.findUnique({ where: { id } });
+      const existing = await prismaClient.opportunity.findUnique({ 
+        where: { id },
+        include: { images: true }
+      });
       if (!existing) {
         return ctx.notFound(`該当する機会が見つかりませんでした: ${ id }`);
       }
@@ -240,26 +243,23 @@ export default class OpportunityController {
               }
             } : {}
           ),
-          ...(data.images?.connect?.length || data.images?.disconnect?.length ? {
-              images: {
-                connect: data.images.connect
-                  .filter(image => {
-                    // Check if this image is already connected to the opportunity
-                    const alreadyConnected = existing.images?.some(existingImage => 
-                      existingImage.id === image.id
-                    );
-                    return !alreadyConnected;
-                  })
-                  .map(image => ({ id: image.id })),
-                disconnect: data.images.disconnect.map(image => ({ id: image.id })),
-              }
-            } : 
-            Array.isArray(data.images) && data.images.length > 0 ? {
-              images: {
-                create: data.images.map((image) => ImageDataTransformer.fromStrapi(image)),
-              }
-            } : {}
-          ),
+          ...(existing.images?.length ? {
+            images: {
+              disconnect: existing.images.map(image => ({ id: image.id }))
+            }
+          } : {}),
+          
+          ...(data.images?.connect?.length ? {
+            images: {
+              connect: data.images.connect.map(image => ({ id: image.id }))
+            }
+          } : {}),
+          
+          ...(Array.isArray(data.images) && data.images.length > 0 ? {
+            images: {
+              create: data.images.map((image) => ImageDataTransformer.fromStrapi(image))
+            }
+          } : {}),
         },
       });
       ctx.body = {
