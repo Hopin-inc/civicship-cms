@@ -267,7 +267,7 @@ export default class OpportunityController {
           data.images.connect
             .filter(image => image && image.id) // Ensure valid image objects with IDs
             .forEach(image => {
-              finalConnect.push({ id: image.id });
+              finalConnect.push({ id: String(image.id) });
             });
         }
 
@@ -276,12 +276,12 @@ export default class OpportunityController {
             if (!image || typeof image !== 'object') return;
             
             if (image.id && image.id !== -1) {
-              finalConnect.push({ id: image.id });
+              finalConnect.push({ id: String(image.id) });
             } 
             else if (image.url) {
               const matched = existingImageMap.get(image.url);
               if (matched) {
-                finalConnect.push({ id: matched.id });
+                finalConnect.push({ id: String(matched.id) });
               } else {
                 try {
                   const transformed = ImageDataTransformer.fromStrapi(image);
