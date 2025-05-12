@@ -245,13 +245,13 @@ export default class OpportunityController {
                 connect: data.images.connect.map(image => ({ id: image.id } )),
                 disconnect: data.images.disconnect.map(image => ({ id: image.id } )),
               }
+            } : 
+            Array.isArray(data.images) && data.images.length > 0 ? {
+              images: {
+                create: data.images.map((image) => ImageDataTransformer.fromStrapi(image)),
+              }
             } : {}
           ),
-          ...(Array.isArray(data.images) && data.images.length > 0 ? {
-            images: {
-              create: data.images.map((image) => ImageDataTransformer.fromStrapi(image)),
-            }
-          } : {}),
         },
       });
       ctx.body = {
