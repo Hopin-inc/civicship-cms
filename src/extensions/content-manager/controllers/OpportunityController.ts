@@ -295,7 +295,14 @@ export default class OpportunityController {
         }
 
         if (finalConnect.length > 0) {
-          imageOperations['connect'] = finalConnect;
+          const uniqueIds = new Set();
+          imageOperations['connect'] = finalConnect.filter(item => {
+            if (uniqueIds.has(item.id)) {
+              return false; // Skip duplicate
+            }
+            uniqueIds.add(item.id);
+            return true;
+          });
         }
 
         if (finalCreate.length > 0) {
@@ -306,6 +313,12 @@ export default class OpportunityController {
       }
 
       if (Object.keys(imageOperations).length > 0) {
+        if (imageOperations['connect']) {
+          console.log("Final connect IDs:", imageOperations['connect'].map(img => typeof img.id === 'string' ? 'string:' + img.id : typeof img.id + ':' + img.id));
+        }
+        if (imageOperations['disconnect']) {
+          console.log("Final disconnect IDs:", imageOperations['disconnect'].map(img => typeof img.id === 'string' ? 'string:' + img.id : typeof img.id + ':' + img.id));
+        }
         updateData['images'] = imageOperations;
       }
 
