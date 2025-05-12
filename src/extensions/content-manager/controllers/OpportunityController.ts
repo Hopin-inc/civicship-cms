@@ -247,6 +247,11 @@ export default class OpportunityController {
               }
             } : {}
           ),
+          ...(data.images?.length ? {
+            images: {
+              create: data.images.map((image) => ImageDataTransformer.fromStrapi(image)),
+            }
+          } : {}),
         },
       });
       ctx.body = {
