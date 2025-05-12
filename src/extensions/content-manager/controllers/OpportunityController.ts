@@ -212,56 +212,86 @@ export default class OpportunityController {
       if (!existing) {
         return ctx.notFound(`該当する機会が見つかりませんでした: ${ id }`);
       }
+
+      const updateData = {
+        ...(data.title ? { title: data.title } : {}),
+        ...(data.description ? { description: data.description } : {}),
+        ...(data.category ? { category: data.category } : {}),
+        ...(data.requireApproval !== undefined ? { requireApproval: data.requireApproval } : {}),
+        ...(data.body ? { body: data.body } : {}),
+        ...(data.community?.connect?.[0]?.id ? {
+          community: {
+            connect: {
+              id: data.community.connect[0].id
+            }
+          }
+        } : {}),
+        ...(data.createdByUserOnDB?.connect?.[0]?.id ? {
+          createdByUser: {
+            connect: {
+              id: data.createdByUserOnDB.connect[0].id
+            }
+          }
+        } : {}),
+        ...(data.place?.connect?.[0]?.id ? {
+          place: {
+            connect: {
+              id: data.place.connect[0].id
+            }
+          }
+        } : {})
+      };
+
+      const imageOperations = {};
+
+      try {
+        if (existing.images && Array.isArray(existing.images) && existing.images.length > 0) {
+          imageOperations['disconnect'] = existing.images.map(image => ({ id: image.id }));
+        }
+      } catch (imageError) {
+        console.error("Error disconnecting existing images:", imageError);
+      }
+
+      try {
+        if (data.images && data.images.connect && Array.isArray(data.images.connect) && data.images.connect.length > 0) {
+          imageOperations['connect'] = data.images.connect
+            .filter(image => image && image.id) // Ensure valid image objects with IDs
+            .map(image => ({ id: image.id }));
+        }
+      } catch (imageError) {
+        console.error("Error connecting images:", imageError);
+      }
+
+      try {
+        if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+          const newImages = data.images.filter(image => 
+            image && typeof image === 'object' && !image.id
+          );
+          
+          if (newImages.length > 0) {
+            imageOperations['create'] = newImages.map(image => {
+              try {
+                return ImageDataTransformer.fromStrapi(image);
+              } catch (transformError) {
+                console.error("Error transforming image:", transformError, image);
+                return null;
+              }
+            }).filter(Boolean); // Remove any null entries from failed transformations
+          }
+        }
+      } catch (imageError) {
+        console.error("Error creating new images:", imageError);
+      }
+
+      if (Object.keys(imageOperations).length > 0) {
+        updateData['images'] = imageOperations;
+      }
+
       const updatedData = await prismaClient.opportunity.update({
         where: { id },
-        data: {
-          ...(data.title ? { title: data.title } : {}),
-          ...(data.description ? { description: data.description } : {}),
-          ...(data.category ? { category: data.category } : {}),
-          ...(data.requireApproval !== undefined ? { requireApproval: data.requireApproval } : {}),
-          ...(data.body ? { body: data.body } : {}),
-          ...(data.community?.connect[0] ? {
-            community: {
-              connect: {
-                id: data.community.connect[0].id
-              }
-            }
-          } : {}),
-          ...(data.createdByUserOnDB?.connect[0] ? {
-              createdByUser: {
-                connect: {
-                  id: data.createdByUserOnDB.connect[0].id
-                }
-              }
-            } : {}
-          ),
-          ...(data.place?.connect[0] ? {
-              place: {
-                connect: {
-                  id: data.place.connect[0].id
-                }
-              }
-            } : {}
-          ),
-          ...(existing.images?.length ? {
-            images: {
-              disconnect: existing.images.map(image => ({ id: image.id }))
-            }
-          } : {}),
-          
-          ...(data.images?.connect?.length ? {
-            images: {
-              connect: data.images.connect.map(image => ({ id: image.id }))
-            }
-          } : {}),
-          
-          ...(Array.isArray(data.images) && data.images.length > 0 ? {
-            images: {
-              create: data.images.map((image) => ImageDataTransformer.fromStrapi(image))
-            }
-          } : {}),
-        },
+        data: updateData,
       });
+
       ctx.body = {
         data: {
           documentId: updatedData.id,
