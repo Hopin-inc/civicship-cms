@@ -253,7 +253,7 @@ export default class OpportunityController {
             }
           });
           
-          imageOperations['disconnect'] = existing.images.map(image => ({ id: image.id }));
+          imageOperations['disconnect'] = existing.images.map(image => ({ id: String(image.id) }));
         }
       } catch (imageError) {
         console.error("Error processing existing images:", imageError);
