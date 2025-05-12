@@ -514,7 +514,7 @@ export interface ApiOpportunitySlotOpportunitySlot
   collectionName: 't_opportunity_slots';
   info: {
     description: '';
-    displayName: '\u52DF\u96C6\u306E\u958B\u50AC\u65E5';
+    displayName: '\u6A5F\u4F1A\u306E\u958B\u50AC\u65E5';
     pluralName: 'opportunity-slots';
     singularName: 'opportunity-slot';
   };
