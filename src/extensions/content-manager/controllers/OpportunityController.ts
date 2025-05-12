@@ -213,7 +213,21 @@ export default class OpportunityController {
         return ctx.notFound(`該当する機会が見つかりませんでした: ${ id }`);
       }
 
-      const updateData = {
+      const updateData: {
+        title?: string;
+        description?: string;
+        category?: any;
+        requireApproval?: boolean;
+        body?: string;
+        community?: { connect: { id: string } };
+        createdByUser?: { connect: { id: string } };
+        place?: { connect: { id: string } };
+        images?: {
+          disconnect?: { id: string }[];
+          connect?: { id: string }[];
+          create?: any[];
+        };
+      } = {
         ...(data.title ? { title: data.title } : {}),
         ...(data.description ? { description: data.description } : {}),
         ...(data.category ? { category: data.category } : {}),
@@ -242,61 +256,92 @@ export default class OpportunityController {
         } : {})
       };
 
-      const imageOperations = {};
-
-      const existingImageMap = new Map();
       try {
-        if (existing.images && Array.isArray(existing.images) && existing.images.length > 0) {
-          existing.images.forEach(img => {
-            if (img.url) {
-              existingImageMap.set(img.url, img);
+        console.log("Existing Images:", existing.images);
+        
+        const inputImages = [];
+        
+        if (data.images && Array.isArray(data.images)) {
+          data.images.forEach(img => {
+            if (img && typeof img === 'object' && img.url) {
+              inputImages.push(img);
             }
           });
+        }
+        
+        if (data.images?.connect && Array.isArray(data.images.connect)) {
+          data.images.connect.forEach(img => {
+            if (img && typeof img === 'object' && img.id) {
+              inputImages.push(img);
+            }
+          });
+        }
+        
+        console.log("Data Images:", inputImages);
+        
+        const uniqueUrlMap = new Map();
+        inputImages.forEach(img => {
+          if (img.url) {
+            uniqueUrlMap.set(img.url, img);
+          } else if (img.id) {
+            uniqueUrlMap.set(`id:${img.id}`, img);
+          }
+        });
+        
+        const uniqueImages = Array.from(uniqueUrlMap.values());
+        
+        const urls = uniqueImages
+          .filter(img => img.url)
+          .map(img => img.url);
           
-          imageOperations['disconnect'] = existing.images.map(image => ({ id: String(image.id) }));
+        let existingInPrisma = [];
+        if (urls.length > 0) {
+          existingInPrisma = await prismaClient.image.findMany({
+            where: { url: { in: urls } }
+          });
         }
-      } catch (imageError) {
-        console.error("Error processing existing images:", imageError);
-      }
-
-      const finalConnect = [];
-      const finalCreate = [];
-
-      try {
-        if (data.images && data.images.connect && Array.isArray(data.images.connect) && data.images.connect.length > 0) {
-          data.images.connect
-            .filter(image => image && image.id) // Ensure valid image objects with IDs
-            .forEach(image => {
-              finalConnect.push({ id: String(image.id) });
-            });
-        }
-
-        if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-          data.images.forEach(image => {
-            if (!image || typeof image !== 'object') return;
-            
-            if (image.id && image.id !== -1) {
-              finalConnect.push({ id: String(image.id) });
-            } 
-            else if (image.url) {
-              const matched = existingImageMap.get(image.url);
-              if (matched) {
-                finalConnect.push({ id: String(matched.id) });
-              } else {
-                try {
-                  const transformed = ImageDataTransformer.fromStrapi(image);
-                  finalCreate.push(transformed);
-                } catch (transformError) {
-                  console.error("Error transforming image:", transformError, image);
-                }
+        
+        const existingUrlToIdMap = new Map(
+          existingInPrisma.map(img => [img.url, img.id])
+        );
+        
+        const finalConnect = [];
+        const finalCreate = [];
+        
+        for (const image of uniqueImages) {
+          if (image.id && image.id !== -1) {
+            finalConnect.push({ id: String(image.id) });
+          }
+          else if (image.url) {
+            const existingId = existingUrlToIdMap.get(image.url);
+            if (existingId) {
+              finalConnect.push({ id: String(existingId) });
+            } else {
+              try {
+                const transformed = ImageDataTransformer.fromStrapi(image);
+                finalCreate.push(transformed);
+              } catch (e) {
+                console.error("Image transformation failed", image, e);
               }
             }
-          });
+          }
         }
-
+        
+        const imageOperations: {
+          disconnect?: { id: string }[];
+          connect?: { id: string }[];
+          create?: any[];
+        } = {};
+        
+        if (existing.images && existing.images.length > 0) {
+          imageOperations.disconnect = existing.images.map(img => ({ 
+            id: String(img.id) 
+          }));
+        }
+        
         if (finalConnect.length > 0) {
           const uniqueIds = new Set();
-          imageOperations['connect'] = finalConnect.filter(item => {
+          imageOperations.connect = finalConnect.filter(item => {
             if (uniqueIds.has(item.id)) {
               return false; // Skip duplicate
             }
@@ -304,22 +349,23 @@ export default class OpportunityController {
             return true;
           });
         }
-
+        
         if (finalCreate.length > 0) {
-          imageOperations['create'] = finalCreate;
+          imageOperations.create = finalCreate;
         }
+        
+        if (Object.keys(imageOperations).length > 0) {
+          if (imageOperations.connect) {
+            console.log("Final connect IDs:", imageOperations.connect.map(img => typeof img.id === 'string' ? 'string:' + img.id : typeof img.id + ':' + img.id));
+          }
+          if (imageOperations.disconnect) {
+            console.log("Final disconnect IDs:", imageOperations.disconnect.map(img => typeof img.id === 'string' ? 'string:' + img.id : typeof img.id + ':' + img.id));
+          }
+          updateData.images = imageOperations;
+        }
+        
       } catch (imageError) {
         console.error("Error processing images:", imageError);
-      }
-
-      if (Object.keys(imageOperations).length > 0) {
-        if (imageOperations['connect']) {
-          console.log("Final connect IDs:", imageOperations['connect'].map(img => typeof img.id === 'string' ? 'string:' + img.id : typeof img.id + ':' + img.id));
-        }
-        if (imageOperations['disconnect']) {
-          console.log("Final disconnect IDs:", imageOperations['disconnect'].map(img => typeof img.id === 'string' ? 'string:' + img.id : typeof img.id + ':' + img.id));
-        }
-        updateData['images'] = imageOperations;
       }
 
       const updatedData = await prismaClient.opportunity.update({
