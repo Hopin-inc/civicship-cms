@@ -247,9 +247,9 @@ export default class OpportunityController {
               }
             } : {}
           ),
-          ...(data.images?.length ? {
+          ...(data.images?.filter?.(img => !img.id)?.length ? {
             images: {
-              create: data.images.map((image) => ImageDataTransformer.fromStrapi(image)),
+              create: data.images.filter(img => !img.id).map((image) => ImageDataTransformer.fromStrapi(image)),
             }
           } : {}),
         },
