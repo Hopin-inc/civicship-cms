@@ -137,7 +137,7 @@ export default class OpportunityController {
       return ctx.badRequest("データが入力されていません。");
     }
     try {
-      const { title, description, category, body, requireApproval } = data;
+      const { title, description, category, body, requireApproval, feeRequired, pointsToEarn } = data;
       const communityId = data.community.connect[0].id;
       const placeId = data.place.connect[0].id;
       const createdBy = data.createdByUserOnDB.connect[0].id;
@@ -148,6 +148,8 @@ export default class OpportunityController {
           category,
           body,
           requireApproval,
+          feeRequired,
+          pointsToEarn,
           community: {
             connect: {
               id: communityId,
@@ -179,6 +181,8 @@ export default class OpportunityController {
           body: newData.body,
           category: newData.category,
           requireApproval: newData.requireApproval,
+          feeRequired: newData.feeRequired,
+          pointsToEarn: newData.pointsToEarn,
           images: [], // This will be fetched separately.
           communityId: newData.communityId,
           placeId: newData.placeId,
@@ -218,6 +222,8 @@ export default class OpportunityController {
         description?: string;
         category?: any;
         requireApproval?: boolean;
+        feeRequired?: number;
+        pointsToEarn?: number;
         body?: string;
         community?: { connect: { id: string } };
         createdByUser?: { connect: { id: string } };
@@ -231,6 +237,8 @@ export default class OpportunityController {
         ...(data.description ? { description: data.description } : {}),
         ...(data.category ? { category: data.category } : {}),
         ...(data.requireApproval !== undefined ? { requireApproval: data.requireApproval } : {}),
+        ...(data.feeRequired !== undefined ? { feeRequired: data.feeRequired } : {}),
+        ...(data.pointsToEarn !== undefined ? { pointsToEarn: data.pointsToEarn } : {}),
         ...(data.body ? { body: data.body } : {}),
         ...(data.community?.connect?.[0]?.id ? {
           community: {
@@ -365,6 +373,8 @@ export default class OpportunityController {
           body: updatedData.body,
           category: updatedData.category,
           requireApproval: updatedData.requireApproval,
+          feeRequired: updatedData.feeRequired,
+          pointsToEarn: updatedData.pointsToEarn,
           images: [], // This will be fetched separately.
           communityId: updatedData.communityId,
           placeId: updatedData.placeId,
