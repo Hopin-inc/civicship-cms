@@ -15,9 +15,10 @@ export default class UserController {
     authorArticleId,
     relatedArticleId,
   }: RelationParams = {}) {
-    const { sort } = ctx.query;
+    const { sort, _q: q } = ctx.query;
     const page = parseInt(ctx.query.page ?? 1);
     const pageSize = parseInt(ctx.query.pageSize ?? 10);
+    const query = q ? decodeURIComponent(q) : undefined;
 
     const skip = (page - 1) * pageSize;
     const take = pageSize;
@@ -29,6 +30,22 @@ export default class UserController {
     }
 
     const where: Prisma.UserWhereInput = {};
+    if (query) {
+      where.OR = [
+        {
+          name: {
+            contains: query,
+            mode: "insensitive",
+          },
+        },
+        {
+          slug: {
+            contains: query,
+            mode: "insensitive",
+          },
+        },
+      ];
+    }
     if (opportunityId) {
       where.opportunitiesCreatedByMe = {
         some: {
