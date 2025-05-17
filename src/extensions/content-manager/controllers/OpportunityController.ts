@@ -20,9 +20,10 @@ type RelationParams = {
 
 export default class OpportunityController {
   static async find(ctx, { articleId, slotId }: RelationParams = {}) {
-    const { sort } = ctx.query;
+    const { sort, _q: q } = ctx.query;
     const page = parseInt(ctx.query.page ?? 1);
     const pageSize = parseInt(ctx.query.pageSize ?? 10);
+    const query = q ? decodeURIComponent(q) : undefined;
 
     const skip = (page - 1) * pageSize;
     const take = pageSize;
@@ -34,6 +35,22 @@ export default class OpportunityController {
     }
 
     const where: Prisma.OpportunityWhereInput = {};
+    if (query) {
+      where.OR = [
+        {
+          title: {
+            contains: query,
+            mode: "insensitive",
+          },
+        },
+        {
+          description: {
+            contains: query,
+            mode: "insensitive",
+          },
+        },
+      ];
+    }
     if (articleId) {
       where.articles = {
         some: {

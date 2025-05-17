@@ -11,9 +11,10 @@ type RelationParams = {
 
 export default class PlaceController {
   static async find(ctx, { opportunityId }: RelationParams = {}) {
-    const { sort } = ctx.query;
+    const { sort, _q: q } = ctx.query;
     const page = parseInt(ctx.query.page ?? 1);
     const pageSize = parseInt(ctx.query.pageSize ?? 10);
+    const query = q ? decodeURIComponent(q) : undefined;
 
     const skip = (page - 1) * pageSize;
     const take = pageSize;
@@ -25,6 +26,22 @@ export default class PlaceController {
     }
 
     const where: Prisma.PlaceWhereInput = {};
+    if (query) {
+      where.OR = [
+        {
+          name: {
+            contains: query,
+            mode: "insensitive",
+          },
+        },
+        {
+          address: {
+            contains: query,
+            mode: "insensitive",
+          },
+        },
+      ];
+    }
     if (opportunityId) {
       where.opportunities = {
         some: {
