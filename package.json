@@ -27,6 +27,7 @@
     "react-router-dom": "^6.0.0",
     "slugify": "^1.6.6",
     "strapi-location-picker": "^0.0.1",
+    "strapi-plugin-ja-pack": "^2.0.1",
     "styled-components": "^6.0.0"
   },
   "devDependencies": {
