@@ -26,6 +26,7 @@ export default ({ env }) => {
             return `${parentDirId}/${dirId}/${fileName}${extension}`;
           },
         },
+        sizeLimit: env.int('MAX_UPLOAD_SIZE_MB', 10) * 1024 * 1024,
       },
     },
     i18n: {
