@@ -42,6 +42,7 @@ export default class OpportunitySlotController {
       startsAt: item.startsAt,
       endsAt: item.endsAt,
       capacity: item.capacity,
+      displayName: item.opportunity.title,
       opportunity: {
         ...item.opportunity,
         createdByOnDB: item.opportunity.createdBy,

@@ -15,9 +15,10 @@ export default class CommunityController {
     articleId,
     placeId,
   }: RelationParams = {}) {
-    const { sort } = ctx.query;
+    const { sort, _q: q } = ctx.query;
     const page = parseInt(ctx.query.page ?? 1);
     const pageSize = parseInt(ctx.query.pageSize ?? 10);
+    const query = q ? decodeURIComponent(q) : undefined;
 
     const skip = (page - 1) * pageSize;
     const take = pageSize;
@@ -29,6 +30,22 @@ export default class CommunityController {
     }
 
     const where: Prisma.CommunityWhereInput = {};
+    if (query) {
+      where.OR = [
+        {
+          name: {
+            contains: query,
+            mode: "insensitive",
+          },
+        },
+        {
+          pointName: {
+            contains: query,
+            mode: "insensitive",
+          },
+        },
+      ];
+    }
     if (opportunityId) {
       where.opportunities = {
         some: {
