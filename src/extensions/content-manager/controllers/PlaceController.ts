@@ -59,6 +59,7 @@ export default class PlaceController {
       id: item.id,
       documentId: item.id,
       name: item.name,
+      displayName: item.name,
       cityCode: item.cityCode,
       address: item.address,
       location: {
@@ -96,6 +97,7 @@ export default class PlaceController {
         id: place.id,
         documentId: place.id,
         name: place.name,
+        displayName: place.name,
         cityCode: place.cityCode,
         address: place.address,
         location: {
