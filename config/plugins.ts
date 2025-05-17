@@ -23,11 +23,16 @@ export default ({ env }) => {
             const dirId = dirs[6];
             const fileName = slugify(path.basename(file.hash));
             const extension = file.ext.toLowerCase();
-            console.log(file, file.related);
-            return `${ parentDirId }/${ dirId }/${ fileName }${ extension }`;
+            return `${parentDirId}/${dirId}/${fileName}${extension}`;
           },
         },
       },
     },
-  }
+    i18n: {
+      enabled: true,
+    },
+    "strapi-plugin-ja-pack": {
+      enabled: true,
+    },
+  };
 };
