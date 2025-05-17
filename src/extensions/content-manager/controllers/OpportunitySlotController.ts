@@ -39,7 +39,7 @@ export default class OpportunitySlotController {
     const results = await Promise.all(items.map(async (item) => ({
       id: item.id,
       documentId: item.id,
-      startsAt: item.startsAt,
+が      startsAt: item.startsAt,
       endsAt: item.endsAt,
       capacity: item.capacity,
       displayName: item.opportunity.title,
@@ -87,6 +87,7 @@ export default class OpportunitySlotController {
         startsAt: result.startsAt,
         endsAt: result.endsAt,
         capacity: result.capacity,
+        displayName: result.opportunity.title,
         opportunity: {
           ...result.opportunity,
           createdByOnDB: result.opportunity.createdBy,
