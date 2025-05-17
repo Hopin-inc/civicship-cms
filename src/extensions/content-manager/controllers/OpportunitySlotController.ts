@@ -42,6 +42,7 @@ export default class OpportunitySlotController {
       startsAt: item.startsAt,
       endsAt: item.endsAt,
       capacity: item.capacity,
+      displayName: item.opportunity.title,
       opportunity: {
         ...item.opportunity,
         createdByOnDB: item.opportunity.createdBy,
@@ -86,6 +87,7 @@ export default class OpportunitySlotController {
         startsAt: result.startsAt,
         endsAt: result.endsAt,
         capacity: result.capacity,
+        displayName: result.opportunity.title,
         opportunity: {
           ...result.opportunity,
           createdByOnDB: result.opportunity.createdBy,
