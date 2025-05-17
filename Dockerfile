@@ -1,24 +1,24 @@
-#FROM node:18-alpine AS dev
-#ENV NODE_ENV=development
-#RUN apk update && apk add --no-cache \
-#  build-base \
-#  gcc \
-#  autoconf \
-#  automake \
-#  zlib-dev \
-#  libpng-dev \
-#  vips-dev \
-#  git \
-#  python3
-#
-#WORKDIR /app
-#COPY package.json yarn.lock ./
-#RUN yarn install
-#COPY . .
-#RUN yarn db:generate || echo "Skipping Prisma generate"
-#
-#EXPOSE 1337
-#CMD ["yarn", "dev"]
+FROM node:18-alpine AS dev
+ENV NODE_ENV=development
+RUN apk update && apk add --no-cache \
+  build-base \
+  gcc \
+  autoconf \
+  automake \
+  zlib-dev \
+  libpng-dev \
+  vips-dev \
+  git \
+  python3
+
+WORKDIR /app
+COPY package.json yarn.lock ./
+RUN yarn install
+COPY . .
+RUN yarn db:generate || echo "Skipping Prisma generate"
+
+EXPOSE 1337
+CMD ["yarn", "dev"]
 
 # Creating multi-stage build for production
 FROM node:18-alpine AS build
