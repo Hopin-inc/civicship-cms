@@ -39,8 +39,8 @@ export default class OpportunitySlotController {
     const results = await Promise.all(items.map(async (item) => ({
       id: item.id,
       documentId: item.id,
-      startsAt: dayjs(item.startsAt).format('YYYY/MM/DD HH:mm'),
-      endsAt: dayjs(item.endsAt).format('YYYY/MM/DD HH:mm'),
+      startsAt: item.startsAt,
+      endsAt: item.endsAt,
       capacity: item.capacity,
       displayName: item.opportunity.title,
       opportunity: {
@@ -84,8 +84,8 @@ export default class OpportunitySlotController {
       data: {
         id: result.id,
         documentId: result.id,
-        startsAt: dayjs(result.startsAt).format('YYYY/MM/DD HH:mm'),
-        endsAt: dayjs(result.endsAt).format('YYYY/MM/DD HH:mm'),
+        startsAt: result.startsAt,
+        endsAt: result.endsAt,
         capacity: result.capacity,
         displayName: result.opportunity.title,
         opportunity: {
@@ -129,8 +129,8 @@ export default class OpportunitySlotController {
         data: {
           documentId: newData.id,
           id: newData.id,
-          startsAt: dayjs(newData.startsAt).format('YYYY/MM/DD HH:mm'),
-          endsAt: dayjs(newData.endsAt).format('YYYY/MM/DD HH:mm'),
+          startsAt: newData.startsAt,
+          endsAt: newData.endsAt,
           capacity: newData.capacity,
           opportunityId: newData.opportunityId,
           createdAt: newData.createdAt,
@@ -179,8 +179,8 @@ export default class OpportunitySlotController {
         data: {
           documentId: updatedData.id,
           id: updatedData.id,
-          startsAt: dayjs(updatedData.startsAt).format('YYYY/MM/DD HH:mm'),
-          endsAt: dayjs(updatedData.endsAt).format('YYYY/MM/DD HH:mm'),
+          startsAt: updatedData.startsAt,
+          endsAt: updatedData.endsAt,
           capacity: updatedData.capacity,
           opportunityId: updatedData.opportunityId,
           createdAt: updatedData.createdAt,
