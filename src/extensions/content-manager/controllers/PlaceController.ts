@@ -119,7 +119,7 @@ export default class PlaceController {
       return ctx.badRequest("データが入力されていません。");
     }
     try {
-      const { name, address, location: { lat: longitude, lng: latitude } } = data;
+      const { name, address, location: { lat: latitude, lng: longitude } } = data;
       const cityCode = data.city.connect[0].id;
       const communityId = data.community.connect[0].id;
       const newPlace = await prismaClient.place.create({
