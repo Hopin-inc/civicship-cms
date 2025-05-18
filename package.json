@@ -26,7 +26,7 @@
     "react-dom": "^18.0.0",
     "react-router-dom": "^6.0.0",
     "slugify": "^1.6.6",
-    "@amicaldo/strapi-google-maps": "^1.0.0",
+    "strapi-location-picker": "^0.0.1",
     "strapi-plugin-ja-pack": "^2.0.1",
     "styled-components": "^6.0.0"
   },
