@@ -215,12 +215,12 @@ export default class ArticleController {
       const updatedData = await prismaClient.article.update({
         where: { id },
         data: {
-          ...(title ? { title } : {}),
-          ...(introduction ? { introduction } : {}),
-          ...(body ? { body } : {}),
-          ...(category ? { category } : {}),
-          ...(publishStatus ? { publishStatus } : {}),
-          ...(publishedAt ? { publishedAt } : {}),
+          ...(title !== undefined ? { title } : {}),
+          ...(introduction !== undefined ? { introduction } : {}),
+          ...(body !== undefined ? { body } : {}),
+          ...(category !== undefined ? { category } : {}),
+          ...(publishStatus !== undefined ? { publishStatus } : {}),
+          ...(publishedAt !== undefined ? { publishedAt } : {}),
           ...(t ? {
             thumbnail: {
               create: ImageDataTransformer.fromStrapi(t),
