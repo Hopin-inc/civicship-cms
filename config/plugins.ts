@@ -34,11 +34,5 @@ export default ({ env }) => {
     "strapi-plugin-ja-pack": {
       enabled: true,
     },
-    "google-maps": {
-      enabled: true,
-      config: {
-        resolve: './src/plugins/strapi-google-maps',
-      },
-    },
   };
 };
