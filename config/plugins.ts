@@ -34,5 +34,11 @@ export default ({ env }) => {
     "strapi-plugin-ja-pack": {
       enabled: true,
     },
+    "google-maps": {
+      enabled: true,
+      config: {
+        apiKey: env("GOOGLE_MAPS_API_KEY"),
+      },
+    },
   };
 };
