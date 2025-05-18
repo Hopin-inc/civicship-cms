@@ -37,7 +37,7 @@ export default ({ env }) => {
     "google-maps": {
       enabled: true,
       config: {
-        apiKey: env("GOOGLE_MAPS_API_KEY"),
+        resolve: './src/plugins/strapi-google-maps',
       },
     },
   };
