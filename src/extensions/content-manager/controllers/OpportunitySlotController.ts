@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import {
   BaseResultNode,
   FindControllerResponse,
@@ -11,9 +12,10 @@ import {prismaClient} from "../../../prisma";
 
 export default class OpportunitySlotController {
   static async find(ctx) {
-    const { sort } = ctx.query;
+    const { sort, _q: q } = ctx.query;
     const page = parseInt(ctx.query.page ?? 1);
     const pageSize = parseInt(ctx.query.pageSize ?? 10);
+    const query = q ? decodeURIComponent(q) : undefined;
 
     const skip = (page - 1) * pageSize;
     const take = pageSize;
@@ -24,11 +26,22 @@ export default class OpportunitySlotController {
       orderBy = { [field]: direction.toLowerCase() };
     }
 
+    const where: Prisma.OpportunitySlotWhereInput = {};
+    if (query) {
+      where.opportunity = {
+        title: {
+          contains: query,
+          mode: "insensitive",
+        },
+      };
+    }
+
     const [total, items] = await Promise.all([
-      prismaClient.opportunitySlot.count(),
+      prismaClient.opportunitySlot.count({ where }),
       prismaClient.opportunitySlot.findMany({
         skip,
         take,
+        where,
         orderBy,
         include: {
           opportunity: true,
