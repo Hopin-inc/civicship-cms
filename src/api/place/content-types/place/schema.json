@@ -17,10 +17,7 @@
     },
     "location": {
       "type": "customField",
-      "options": {
-        "info": true
-      },
-      "customField": "plugin::strapi-location-picker.location-picker",
+      "customField": "plugin::google-maps.map",
       "required": true
     },
     "address": {
