@@ -17,7 +17,7 @@
     "@strapi-community/strapi-provider-upload-google-cloud-storage": "^4.10.5",
     "@strapi/plugin-cloud": "5.9.0",
     "@strapi/plugin-users-permissions": "5.9.0",
-    "@strapi/strapi": "5.9.0",
+    "@strapi/strapi": "5.24.2",
     "dayjs": "^1.11.13",
     "pg": "8.8.0",
     "prisma": "^6.3.1",
